@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+    <!-- 🌎 Todos los idiomas -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.global.min.js"></script>
+</head>
+
+<style>
+    /* 📅 Estilos generales del calendario */
+    #calendario,
+    #calendarioDigital {
+        max-width: 800px;
+        margin: 0 auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+    }
+
+    /* 🗓️ Cabecera del calendario */
+    .fc-toolbar {
+        background: linear-gradient(145deg, #2e2e2e, #1f2937);
+        color: white;
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .fc-toolbar-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    /* 🎛️ Botones */
+    .fc-button {
+        background-color: #3b82f6 !important;
+        border: none !important;
+        color: white !important;
+        border-radius: 0.5rem !important;
+        padding: 0.4rem 0.8rem !important;
+        font-weight: 500 !important;
+        transition: background 0.2s ease;
+    }
+
+    
+
+    .fc-button-active {
+        background-color: #1d4ed8 !important;
+    }
+
+    /* 🧩 Eventos */
+    .fc-event {
+        border: none !important;
+        border-radius: 0.5rem !important;
+        font-size: 0.85rem;
+        padding: 2px 4px;
+        font-weight: 600;
+        transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+
+    .fc-event:hover {
+        transform: scale(1.02);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+   
+
+    /* ✨ Día actual */
+    .fc-day-today {
+        background-color: #0ae40a !important;
+    }
+
+    .fc-daygrid-day-number {
+    color: rgb(10, 8, 8) !important;      /* ← elige el color que quieras */
+    font-weight: 600;             /* opcional: hace que se vean más claros */
+    font-size: 0.9rem;            /* opcional: ajusta el tamaño */
+}
+   
+</style>
+
+<body>
+    <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+        {% if messages %}
+        {% for message in messages %}
+        {% if message.tags == 'success' %}
+        <div class=" alert alert-success">
+            {{ message }}
+        </div>
+        {% else %}
+        <div class=" alert alert-error">
+            {{ message }}
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+        <div class="mb-4 p-4 bg-blue-50 border border-black rounded-xl shadow-sm flex items-center justify-center h-10"
+            style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Calendario Digitales</h2>
+        </div>
+
+        <div class="mb-4 flex flex-col md:flex-row gap-4 items-center">
+            <div class="flex items-center gap-2">
+                <label for="select-ubicacion" class="font-medium">Ubicación:</label>
+                <select id="select-ubicacion" class="border rounded p-2">
+                    <option value="">— Todas —</option>
+                    {% for u in ubicaciones %}
+                    <option value="{{ u.id }}">{{ u.codigo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <label for="select-slot" class="font-medium">Slot:</label>
+                <select id="select-slot" class="border rounded p-2">
+                    <option value="">— Seleccione —</option>
+                    {% for s in slots %}
+                    <option value="{{ s.id }}" data-ubicacion="{{ s.ubicacion.id }}">
+                        {{ s.ubicacion.nombre }} — Slot {{ s.numero_slot }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div id="calendarioDigital" class="border rounded-lg shadow"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('calendarioDigital');
+            const selectUbicacion = document.getElementById('select-ubicacion');
+            const selectSlot = document.getElementById('select-slot');
+
+            // 🔹 Bandera para controlar si se debe cargar información
+            let filtrosActivos = false;
+
+            // --- Filtro dependiente ---
+            selectUbicacion.addEventListener('change', function () {
+                const ubicacionId = this.value;
+                filtrosActivos = !!ubicacionId; // solo activamos si hay ubicación
+
+                for (let opt of selectSlot.options) {
+                    if (!opt.value) continue; // ignora "Todos"
+                    opt.hidden = ubicacionId && opt.dataset.ubicacion !== ubicacionId;
+                }
+
+                selectSlot.value = ""; // resetea slot
+                calendar.refetchEvents(); // recarga (o limpia)
+            });
+
+            selectSlot.addEventListener('change', function () {
+                filtrosActivos = !!selectUbicacion.value; // sigue dependiendo de la ubicación
+                calendar.refetchEvents();
+            });
+
+            // --- Inicializar FullCalendar ---
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                nowIndicator: true,
+                navLinks: true,
+                dayMaxEventRows: true,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    day: 'Día',
+                    list: 'Lista'
+                },
+                // 🔹 Cargar eventos solo si hay filtros activos
+                events: function (info, success, failure) {
+                    if (!filtrosActivos) {
+                        success([]); // vacío al inicio
+                        return;
+                    }
+
+                    const params = new URLSearchParams({
+                        start: info.startStr,
+                        end: info.endStr
+                    });
+                    if (selectUbicacion.value) params.set('ubicacion_id', selectUbicacion.value);
+                    if (selectSlot.value) params.set('slot_id', selectSlot.value);
+
+                    fetch(`/api/ocupaciones-digitales/?${params}`)
+                        .then(r => r.json())
+                        .then(success)
+                        .catch(failure);
+                },
+                eventClick: function (info) {
+                    const e = info.event.extendedProps;
+                    alert(`🏢 ${e.ubicacion}\n🎛️ Slot ${e.slot}\n📄 Nota ${e.nota}\n📶 Estado: ${e.estado}`);
+                }
+            });
+
+            calendar.render();
+        });
+    </script>
+
+    <style>
+        #calendarioDigital {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+    </style>
+    </div>
+
+
+</body>
+{% endblock %}
+
+</html>

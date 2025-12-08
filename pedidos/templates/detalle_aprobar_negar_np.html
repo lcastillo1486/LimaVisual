@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body body class="bg-gray-100">
+
+    <div
+        class="max-w-[90rem] mx-auto bg-white p-8 mt-12 shadow-2xl rounded-2xl border border-gray-200 animate-fade-in-up">
+
+        <h1 class="text-center text-xl font-bold text-blue-900 mb-6">NOTA DE PEDIDO</h1>
+
+        <!-- 🔹 Datos principales -->
+        <div class="mb-8 bg-white shadow rounded-lg p-4">
+            <table class="w-full text-sm">
+                <b>Ejecutivo:</b> {{ usuario.get_full_name }}
+                <tr class="border-b">
+                    <td class="py-2"><b>N° Nota:</b> {{ nota.numero_np }}</td>
+                    <td><b>Fecha:</b> {{ nota.fecha|date:"d/m/Y" }}</td>
+                </tr>
+                <tr class="border-b">
+                    <td class="py-2"><b>Anunciante:</b> {{ nota.cliente.nombre_comercial }}</td>
+                    <td><b>RUC:</b> {{ nota.cliente.ruc }}</td>
+                    <td><b>Marca:</b> {{ nota.anunciante }}</td>
+                </tr>
+                <tr class="border-b">
+                    <td class="py-2" colspan="3"><b>Dirección:</b> {{ nota.direccion }}</td>
+                </tr>
+                <tr class="border-b">
+                    <td class="py-2"><b>Contacto:</b> {{ nota.contacto }}</td>
+                    <td><b>Teléfono:</b> {{ nota.telefono }}</td>
+                    <td><b>Correo Contacto:</b> {{ correo_contacto }}</td>
+                </tr>
+                <tr>
+                    <td class="py-2"><b>Tipo de Venta:</b> {{ nota.tipo_venta.descripcion }}</td>
+                    <td><b>Forma de Pago:</b> {{ nota.tipo_pago.descripcion }}</td>
+                    <td><b>Días de Crédito:</b> {{ nota.dias_credito.dias }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 🔹 Ubicaciones Fijas -->
+        <div class="mb-8">
+            <h2 class="bg-blue-100 text-blue-900 font-bold px-3 py-2 rounded border border-blue-900">UBICACIONES FIJAS
+            </h2>
+
+            {% if detalles_fijas %}
+            <div class="overflow-x-auto mt-3">
+                <table class="w-full border border-gray-300 text-xs">
+                    <thead class="bg-blue-100 text-blue-900">
+                        <tr>
+                            <th class="border p-2">Código</th>
+                            <th class="border p-2">Dirección</th>
+                            <th class="border p-2">Desde</th>
+                            <th class="border p-2">Hasta</th>
+                            <th class="border p-2">Días</th>
+                            <th class="border p-2">Tar. Mes</th>
+                            <th class="border p-2">Tar. Día</th>
+                            <th class="border p-2">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in detalles_fijas %}
+                        <tr class="bg-white">
+                            <td class="border p-2 text-center">{{ d.codigo }}</td>
+                            <td class="border p-2">{{ d.direccion }}</td>
+                            <td class="border p-2 text-center">{{ d.fecha_inicio|date:"d/m/Y" }}</td>
+                            <td class="border p-2 text-center">{{ d.fecha_fin|date:"d/m/Y" }}</td>
+                            <td class="border p-2 text-center">{{ d.dias }}</td>
+                            <td class="border p-2 text-center">{{ d.tarifa_mes }}</td>
+                            <td class="border p-2 text-center">{{ d.tarifa_dia }}</td>
+                            <td class="border p-2 text-center font-semibold">{{ d.total_tarifa_ubi }}</td>
+                        </tr>
+                        {% if d.pinta == 1 %}
+                        <tr class="bg-red-100 text-red-900 text-sm">
+                            <td colspan="7">La tarifa minima es de S/ {{d.tarifa_minima}}. La Desviación Porcentual para
+                                esta ubicación es de: {{d.desviacion}}%. El cumplmiento tarifario es de solo
+                                {{d.cumplimiento}}% </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-gray-100 font-bold">
+                            <td colspan="7" class="border p-2 text-right">TOTAL ESTÁTICAS :</td>
+                            <td class="border p-2 text-center">{{ total_tarifa_estaticas }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+            </div>
+            {% else %}
+            <p class="text-gray-600 text-sm mt-2">No hay ubicaciones fijas asociadas.</p>
+            {% endif %}
+        </div>
+
+        <!-- 🔹 Ubicaciones Digitales -->
+        <div class="mb-8">
+            <h2 class="bg-blue-100 text-blue-900 font-bold px-3 py-2 rounded border border-blue-900">UBICACIONES
+                DIGITALES</h2>
+
+            {% if reservas_digitales %}
+            <div class="overflow-x-auto mt-3">
+                <table class="w-full border border-gray-300 text-xs">
+                    <thead class="bg-blue-100 text-blue-900">
+                        <tr>
+                            <th class="border p-2">Ubicación</th>
+                            <th class="border p-2">Dirección</th>
+                            <th class="border p-2">Slot</th>
+                            <th class="border p-2">Desde</th>
+                            <th class="border p-2">Hasta</th>
+                            <th class="border p-2">Días</th>
+                            <th class="border p-2">Tar. Mes</th>
+                            <th class="border p-2">Tar. Día</th>
+                            <th class="border p-2">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reservas_digitales %}
+                        <tr class="bg-white">
+                            <td class="border p-2 text-center">{{ r.slot.ubicacion.codigo }}</td>
+                            <td class="border p-2">{{ r.slot.ubicacion.direccion }}</td>
+                            <td class="border p-2 text-center">{{ r.slot.numero_slot }}</td>
+                            <td class="border p-2 text-center">{{ r.fecha_inicio|date:"d/m/Y" }}</td>
+                            <td class="border p-2 text-center">{{ r.fecha_fin|date:"d/m/Y" }}</td>
+                            <td class="border p-2 text-center">{{ r.dias }}</td>
+                            <td class="border p-2 text-center">{{ r.tarifa_mes }}</td>
+                            <td class="border p-2 text-center">{{ r.tarifa_dia }}</td>
+                            <td class="border p-2 text-center font-semibold">{{ r.total_tarifa_digital }}</td>
+                        </tr>
+                        {% if r.pinta_slot == 1 %}
+                        <tr class="bg-red-100 text-red-900 text-sm">
+                            <td colspan="7">La tarifa minima es de S/ {{r.tarifa_minima}}. La Desviación Porcentual para
+                                esta ubicación es de: {{r.desviacion_slot}}%. El cumplmiento tarifario es de solo
+                                {{r.cumplimiento_slot}}% </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-gray-100 font-bold">
+                            <td colspan="8" class="border p-2 text-right">TOTAL DIGITALES :</td>
+                            <td class="border p-2 text-center">{{ total_tarifa_digital }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-600 text-sm mt-2">No hay ubicaciones digitales asociadas.</p>
+            {% endif %}
+        </div>
+
+        {% if nota.detalle_ubicaciones %}
+        <div class="bg-white shadow rounded-lg p-4 mb-6">
+            <p class="text-sm"><b>Observaciones:</b> {{ nota.detalle_ubicaciones }}</p>
+        </div>
+        {% endif %}
+
+        <!-- 🔹 Totales -->
+        <div class="bg-white shadow rounded-lg p-4 mb-6">
+            <table class="w-full text-center text-sm font-semibold">
+                <tr>
+                    <td class="py-2">SUBTOTAL: S/ {{ subtotal }}</td>
+                    <td>IGV: S/ {{ nota.igv }}</td>
+                    <td class="text-blue-900 font-bold">TOTAL: S/ {{ nota.total }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 🔹 Datos de facturación -->
+        <div class="bg-white shadow rounded-lg p-4 mb-6">
+            <table class="w-full text-xs">
+                <tr>
+                    <td class="py-2"><b>Razón Social:</b><br>{{ nota.razon_social }}</td>
+                    <td><b>RUC:</b><br>{{ nota.razon_social.ruc }}</td>
+                    <td><b>Correo:</b><br>{{ correo_admin }}</td>
+                    <td><b>Teléfono:</b><br>{{ nota.razon_social.telefono }}</td>
+                    <td><b>Dirección:</b><br>{{ nota.razon_social.direccion }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="bg-white shadow rounded-lg p-6 mb-6 text-base flex justify-center space-x-6">
+
+            <!-- Autorizar -->
+            <a href="/aprobar-np/{{nota.id}}/" title="Autorizar Nota"
+                onclick="return confirm('¿Estás seguro de AUTORIZAR esta nota?');"
+                class="inline-flex items-center justify-center w-12 h-12 text-green-600 hover:text-white hover:bg-green-600 rounded-full transition-all duration-200 shadow-md cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                    stroke="currentColor" class="w-7 h-7">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" />
+                    <circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </a>
+
+            <!-- Rechazar -->
+            <a href="/rechazar-np/{{nota.id}}/" title="Rechazar Nota"
+                onclick="return confirm('¿Estás seguro de RECHAZAR esta nota?');"
+                class="inline-flex items-center justify-center w-12 h-12 text-red-600 hover:text-white hover:bg-red-600 rounded-full transition-all duration-200 shadow-md cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                    stroke="currentColor" class="w-7 h-7">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+                    <circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </a>
+
+        </div>
+    </div>
+</body>
+{% endblock %}
+
+</html>

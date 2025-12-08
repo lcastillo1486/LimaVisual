@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Configuración Tailwind con modo oscuro activado
+    tailwind.config = {
+      darkMode: 'class',
+    };
+  </script>
+</head>
+
+<body>
+  <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+
+   <body class="dark bg-gray-900 text-gray-100 min-h-screen">
+  <!-- HEADER -->
+  <header class="bg-gray-800 border-b border-gray-700">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">📊 Dashboard - LIMA VISUAL</h1>
+      <div class="flex gap-3">
+        <input type="date" id="fecha_inicio" class="bg-gray-700 text-sm rounded-lg px-2 py-1.5">
+        <input type="date" id="fecha_fin" class="bg-gray-700 text-sm rounded-lg px-2 py-1.5">
+        <button id="filtrar" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm">Filtrar</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO -->
+  <main class="max-w-7xl mx-auto p-6 space-y-6">
+
+    <!-- KPIs -->
+    <section>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+          <h3 class="text-sm text-gray-400">Total Notas</h3>
+          <p id="kpi-notas" class="text-2xl font-semibold mt-1">--</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+          <h3 class="text-sm text-gray-400">Facturado (S/)</h3>
+          <p id="kpi-facturado" class="text-2xl font-semibold mt-1">--</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+          <h3 class="text-sm text-gray-400">Promedio por Nota</h3>
+          <p id="kpi-promedio" class="text-2xl font-semibold mt-1">--</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+          <h3 class="text-sm text-gray-400">Clientes Activos</h3>
+          <p id="kpi-clientes" class="text-2xl font-semibold mt-1">--</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+          <h3 class="text-sm text-gray-400">Espacios Ocupados</h3>
+          <p id="kpi-espacios" class="text-2xl font-semibold mt-1">--</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+          <h3 class="text-sm text-gray-400">Días Contratados</h3>
+          <p id="kpi-dias" class="text-2xl font-semibold mt-1">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRAFICOS -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+        <h2 class="text-lg font-semibold mb-3">Evolución de ingresos</h2>
+        <canvas id="chartIngresos" height="200"></canvas>
+      </div>
+
+      <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+        <h2 class="text-lg font-semibold mb-3">Notas por estado</h2>
+        <canvas id="chartEstados" height="200"></canvas>
+      </div>
+
+      <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+        <h2 class="text-lg font-semibold mb-3">Top 5 Clientes</h2>
+        <canvas id="chartClientes" height="200"></canvas>
+      </div>
+
+      <div class="bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+        <h2 class="text-lg font-semibold mb-3">Facturación por usuario</h2>
+        <canvas id="chartUsuarios" height="200"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let chartIngresos, chartEstados, chartClientes, chartUsuarios;
+
+    async function cargarDatos() {
+      const inicio = document.getElementById("fecha_inicio").value;
+      const fin = document.getElementById("fecha_fin").value;
+      const url = `/dashboard-data/?fecha_inicio=${inicio}&fecha_fin=${fin}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      // KPIs
+      document.getElementById("kpi-notas").innerText = data.kpis.total_notas;
+      document.getElementById("kpi-facturado").innerText = data.kpis.total_facturado.toFixed(2);
+      document.getElementById("kpi-promedio").innerText = data.kpis.promedio_factura.toFixed(2);
+      document.getElementById("kpi-clientes").innerText = data.kpis.clientes_activos;
+      document.getElementById("kpi-espacios").innerText = data.kpis.espacios_ocupados;
+      document.getElementById("kpi-dias").innerText = data.kpis.total_dias_contratados;
+
+      // GRÁFICO: ingresos mensuales
+      const labelsMes = data.graficos.ingresos_mensuales.map(d => new Date(d.mes).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' }));
+      const valoresMes = data.graficos.ingresos_mensuales.map(d => d.total_mes);
+
+      if (chartIngresos) chartIngresos.destroy();
+      chartIngresos = new Chart(document.getElementById('chartIngresos'), {
+        type: 'line',
+        data: { labels: labelsMes, datasets: [{ label: 'S/ Ingresos', data: valoresMes, borderColor: '#3b82f6', tension: 0.3 }] },
+        options: { scales: { x: { ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' } } } }
+      });
+
+      // GRÁFICO: notas por estado
+      if (chartEstados) chartEstados.destroy();
+      chartEstados = new Chart(document.getElementById('chartEstados'), {
+        type: 'doughnut',
+        data: {
+          labels: data.graficos.notas_por_estado.map(d => d.estado__descripcion),
+          datasets: [{ data: data.graficos.notas_por_estado.map(d => d.cantidad), backgroundColor: ['#22c55e','#f97316','#ef4444','#3b82f6','#a855f7'] }]
+        },
+        options: { plugins: { legend: { labels: { color: '#ccc' } } } }
+      });
+
+      // GRÁFICO: top clientes
+      if (chartClientes) chartClientes.destroy();
+      chartClientes = new Chart(document.getElementById('chartClientes'), {
+        type: 'bar',
+        data: {
+          labels: data.graficos.top_clientes.map(d => d.cliente__razon_social || 'Sin nombre'),
+          datasets: [{ data: data.graficos.top_clientes.map(d => d.total_cliente), backgroundColor: '#3b82f6' }]
+        },
+        options: { scales: { x: { ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' } } } }
+      });
+
+      // GRÁFICO: facturación por usuario
+      if (chartUsuarios) chartUsuarios.destroy();
+      chartUsuarios = new Chart(document.getElementById('chartUsuarios'), {
+        type: 'bar',
+        data: {
+          labels: data.graficos.facturacion_por_usuario.map(d => d.usuario__username || '—'),
+          datasets: [{ data: data.graficos.facturacion_por_usuario.map(d => d.total_vendedor), backgroundColor: '#22c55e' }]
+        },
+        options: { scales: { x: { ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' } } } }
+      });
+    }
+
+    document.getElementById("filtrar").addEventListener("click", cargarDatos);
+    cargarDatos();
+    setInterval(cargarDatos, 60000); // actualiza cada minuto
+  </script>
+  </div>
+
+  <!-- 🌙 Script para modo oscuro -->
+  <script>
+    const btn = document.getElementById('toggleTheme');
+    const html = document.documentElement;
+    btn.addEventListener('click', () => {
+      html.classList.toggle('dark');
+    });
+  </script>
+</body>
+{% endblock %}
+
+</html>

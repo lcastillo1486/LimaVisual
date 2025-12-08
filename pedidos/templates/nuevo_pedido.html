@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+{% load l10n %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<style>
+    .tooltip {
+        position: relative;
+        cursor: pointer;
+    }
+</style>
+
+<body>
+    <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+        {% if messages %}
+        <div id="toast-container" class="fixed top-4 right-4 space-y-3 z-50">
+            {% for message in messages %}
+            <div class="
+        toast-message
+        p-4 rounded-xl shadow-lg text-white font-medium
+        transition-opacity duration-500
+        {% if message.tags == 'success' %}
+          bg-emerald-500
+        {% else %}
+          bg-rose-500
+        {% endif %}
+      ">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <style>
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .toast-message {
+                animation: slideIn 0.3s ease-out;
+            }
+        </style>
+
+        <script>
+            // Espera a que el DOM esté listo
+            document.addEventListener('DOMContentLoaded', () => {
+                const toasts = document.querySelectorAll('.toast-message');
+                toasts.forEach((toast, i) => {
+                    // Auto-ocultar después de 5 segundos (+ pequeño delay entre cada uno)
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.remove(), 500); // Espera a que termine la transición
+                    }, 5000 + (i * 300)); // escalonado por estética
+                });
+            });
+        </script>
+        {% endif %}
+
+        
+        <div class="mb-4 p-4 bg-blue-50 border border-black rounded-xl shadow-sm flex items-center justify-center h-10"
+            style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Registrar Nota de Pedido</h2>
+        </div>
+        <form method="POST" action="/crear/pedido/" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div
+                class="mb-4 p-4 bg-gray-100 border border-black rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label for="fecha" class="block mb-2 text-sm font-medium text-gray-700">
+                        Fecha:
+                    </label>
+                    <input type="date" id="fecha" name="fecha" value="{{ fecha|date:'Y-m-d' }}" readonly
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
+                </div>
+                <!-- Grupo 1 -->
+                <div>
+                    <label for="tipo_venta" class="block mb-2 text-sm font-medium text-gray-700">
+                        Seleccione un tipo de venta:
+                    </label>
+                    <select id="tipo_venta" name="tipo_venta" required
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-50">
+                        <option value="">-- Selecciona un tipo de venta --</option>
+                        {% for opcion in listado_tipo_venta %}
+                        <option value="{{ opcion.id }}">{{ opcion.descripcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Grupo 2 -->
+                <div>
+                    <label for="tipo_pago" class="block mb-2 text-sm font-medium text-gray-700">
+                        Seleccione un tipo de pago:
+                    </label>
+                    <select id="tipo_pago" name="tipo_pago" required
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
+                        <option value="">-- Selecciona un tipo de pago --</option>
+                        {% for opcion in listado_tipo_pago %}
+                        <option value="{{ opcion.id }}">{{ opcion.descripcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Grupo 3 -->
+
+                <div>
+                    <label for="dias" class="block mb-2 text-sm font-medium text-gray-700">
+                        Días de crédito:
+                    </label>
+                    <select id="dias" name="dias"
+                        class="block w-48 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
+                        {% for opcion in listado_dias %}
+                        <option value="{{ opcion.id }}">{{ opcion.dias }}</option>
+                        {% endfor %}
+                    </select>
+                    <p id="msg-error" class="mt-2 text-sm text-red-600 hidden"></p>
+                </div>
+
+            </div>
+            <!--SECCION 2-->
+            <div
+                class="mb-4 p-4 bg-gray-100 border border-black rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <label for="cliente" class="font-medium text-gray-800 whitespace-nowrap">
+                            Anunciante:
+                        </label>
+
+                        <input type="hidden" name="cliente" id="proveedor_id" required>
+                        <input type="text" id="proveedor_nombre" placeholder="Buscar anunciante..." readonly required
+                            class="w-full px-4 py-2 border border-gray-300 rounded bg-gray-100 text-sm"
+                            onclick="abrirModalProveedor()">
+                    </div>
+                </div>
+
+            </div>
+            <!--SECCION 3 -->
+            <div
+                class="mb-4 p-4 bg-gray-100 border border-black rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- Campo Marca -->
+                <div class="flex items-center gap-2">
+                    <label for="anunciante" class="font-medium text-gray-800 whitespace-nowrap">
+                        Marca:
+                    </label>
+                    <input type="text" name="anunciante" id="anunciante" required
+                        class="flex-1 h-8 px-3 border border-black rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black">
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: UBICACIONES -->
+            <div class="mb-6 p-6 bg-gray-100 border border-black rounded-2xl shadow-md space-y-6">
+
+                <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">
+                    Selección de Ubicaciones
+                </h2>
+
+                <!-- 🧭 TABLAS LADO A LADO -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    <!-- 🧱 Fijas -->
+                    <div class="bg-white border border-gray-300 rounded-xl shadow-sm p-4">
+                        <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center justify-between">
+                            <span>Ubicaciones Estáticas</span>
+                            <button type="button"
+                                onclick="document.getElementById('modal-ubicaciones').classList.remove('hidden')"
+                                class="px-3 py-1.5 bg-gray-800 text-white rounded-lg hover:bg-gray-700 text-sm shadow-sm">
+                                + Añadir
+                            </button>
+                        </h3>
+
+                        <div class="overflow-auto rounded-lg max-h-60 border">
+                            <table id="tabla-ubicaciones" class="min-w-full text-sm text-left">
+                                <thead class="bg-gray-800 text-white sticky top-0">
+                                    <tr>
+                                        <th class="px-3 py-2 text-center w-20">Código</th>
+                                        <th class="px-3 py-2 text-center w-24">Inicio</th>
+                                        <th class="px-3 py-2 text-center w-24">Fin</th>
+                                        <th class="px-3 py-2 text-center w-16">Días</th>
+                                        <th class="px-3 py-2 text-center w-16 whitespace-nowrap">Tarifa/mes (S/)</th>
+                                        <th class="px-3 py-2 text-center w-16 whitespace-nowrap">Diario (S/)</th>
+                                        <th class="px-3 py-2 text-center w-16 whitespace-nowrap">Total (S/)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-ubicaciones">
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-2 text-center text-gray-500 italic">
+                                            No hay ubicaciones seleccionadas
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 💻 Digitales -->
+                    <div class="bg-white border border-gray-300 rounded-xl shadow-sm p-4">
+                        <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center justify-between">
+                            <span>Ubicaciones Digitales</span>
+                            <button type="button"
+                                onclick="document.getElementById('modal-ubicaciones-digitales').classList.remove('hidden')"
+                                class="px-3 py-1.5 bg-gray-800 text-white rounded-lg hover:bg-gray-700 text-sm shadow-sm">
+                                + Añadir
+                            </button>
+                        </h3>
+
+                        <div class="overflow-auto rounded-lg max-h-60 border">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="bg-gray-800 text-white sticky top-0">
+                                    <tr>
+                                        <th class="px-3 py-2">Código</th>
+                                        <th class="px-3 py-2 text-center w-14">Slot</th>
+                                        <th class="px-3 py-2 text-center w-24">Inicio</th>
+                                        <th class="px-3 py-2 text-center w-24">Fin</th>
+                                        <th class="px-3 py-2 text-center w-24">Días</th>
+                                        <th class="px-3 py-2 text-center w-24">Tarifa/mes (S/)</th>
+                                        <th class="px-3 py-2 text-center w-24">Diario (S/)</th>
+                                        <th class="px-3 py-2 text-center w-24 whitespace-nowrap">Total (S/)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="body-seleccion-digital">
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-2 text-center text-gray-500 italic">
+                                            No hay ubicaciones digitales seleccionadas
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🧠 OBSERVACIONES ABAJO -->
+                <div>
+                    <label for="detalle_ubicaciones" class="block text-base font-semibold text-gray-800 mb-2">
+                        Observaciones adicionales
+                    </label>
+                    <textarea name="detalle_ubicaciones" id="detalle_ubicaciones" rows="5"
+                        class="w-full p-3 border border-gray-300 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 resize-none"
+                        placeholder="Escribe observaciones o información extra aquí..."></textarea>
+                </div>
+
+                <!-- Input oculto -->
+                <input type="hidden" id="ubicaciones_seleccionadas" name="ubicaciones_seleccionadas">
+            </div>
+
+
+            <!--SECCION  5-->
+            <div class="mb-4 p-4 bg-gray-100 border border-black rounded-xl shadow-sm flex flex-col md:flex-row gap-6">
+                <!-- Sección izquierda: Fechas y días -->
+                <!-- <div class="flex-1"> -->
+                <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end"> -->
+                <!-- Fecha Inicio -->
+                <!-- <div>
+                            <label for="fecha_inicio" class="block mb-2 text-sm font-medium text-gray-700">
+                                Fecha de Inicio:
+                            </label>
+                            <input type="date" id="fecha_inicio" name="fecha_inicio" required
+                                class="block w-3/4 md:w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                        </div> -->
+
+                <!-- Fecha Fin -->
+                <!-- <div>
+                            <label for="fecha_fin" class="block mb-2 text-sm font-medium text-gray-700">
+                                Fecha Fin:
+                            </label>
+                            <input type="date" id="fecha_fin" name="fecha_fin" required
+                                class="block w-3/4 md:w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                        </div> -->
+                <!-- </div> -->
+
+                <!-- Campo Días -->
+                <!-- <div class="mt-3 flex items-center gap-2">
+                        <label for="dias_dif" class="text-sm font-medium text-gray-700">
+                            Días:
+                        </label>
+                        <input type="number" id="dias_dif" name="dias_dif" readonly
+                            class="w-20 rounded-lg border-gray-300 shadow-sm bg-gray-100 focus:ring-0 text-center" />
+                    </div> -->
+                <!-- </div> -->
+
+                <!-- Sección Precio -->
+                <div class="flex-1 p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+                    <h3 class="text-sm font-semibold mb-2"></h3>
+
+                    <div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Tarifa -->
+                        <!-- <div class="flex flex-col">
+                            <label for="tarifa" class="text-sm font-medium text-gray-700">Tarifa (S/):</label>
+                            <input type="number" id="tarifa" name="tarifa" placeholder="0.00" step="0.01" required
+                                class="rounded-lg border-gray-300 shadow-sm bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right" />
+                        </div> -->
+
+                        <!-- Tarifa Negociada -->
+                        <div class="flex flex-col">
+                            <label for="tarifa_neg" class="text-sm font-medium text-gray-700">Total Estáticas.
+                                (S/):</label>
+                            <input type="number" id="tarifa_neg" name="tarifa_neg" placeholder="0.00" step="0.01"
+                                readonly
+                                class="rounded-lg border-gray-300 shadow-sm bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right" />
+                        </div>
+
+                        <div class="flex flex-col">
+                            <label for="tarifa_neg_dig" class="text-sm font-medium text-gray-700">Total Digitales.
+                                (S/):</label>
+                            <input type="number" id="tarifa_neg_dig" name="tarifa_neg_dig" placeholder="0.00"
+                                step="0.01" readonly
+                                class="rounded-lg border-gray-300 shadow-sm bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right" />
+                        </div>
+
+                        <!-- IGV -->
+                        <div class="flex flex-col">
+                            <label for="igv" class="text-sm font-medium text-gray-700">IGV (S/):</label>
+                            <input type="number" id="igv" name="igv" placeholder="0.00" step="0.01" readonly
+                                class="rounded-lg border-gray-300 shadow-sm bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right" />
+                        </div>
+
+                        <!-- Total -->
+                        <div class="flex flex-col">
+                            <label for="total" class="text-sm font-medium text-gray-700">Total. (S/):</label>
+                            <input type="number" id="total" name="total" placeholder="0.00" step="0.01" readonly
+                                class="rounded-lg border-gray-300 shadow-sm bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--SECCION 6 -->
+
+            <div class="mb-4 p-4 bg-gray-100 border border-black rounded-xl shadow-sm flex flex-col md:flex-row gap-6">
+
+                <!-- 🧾 Bloque principal: Datos de Facturación (3/4 del espacio) -->
+                <div class="md:basis-3/4 mb-6 p-4 bg-gray-50 border border-gray-300 rounded-xl shadow-sm">
+                    <div class="mb-3 pb-2 border-b border-gray-300">
+                        <h2 class="text-xl font-semibold text-gray-900">Datos de Facturación</h2>
+
+                    </div>
+
+                    <div>
+                        <label for="razon_social" class="font-medium text-gray-800 whitespace-nowrap">
+                            Razón Social:
+                        </label>
+                        <select id="razon_social" name="razon_social" required
+                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-50">
+                            <option value="">-- Selecciona una razón social --</option>
+                            {% for opcion in listado_clientes %}
+                            <option value="{{ opcion.id }}" data-ruc="{{ opcion.ruc }}"
+                                data-direccion="{{ opcion.direccion }}" data-telefono="{{ opcion.telefono }}"
+                                data-contacto="{{ opcion.contacto }}" data-correo="{{opcion.correo}}">
+                                {{ opcion.razon_social }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                        <div>
+                            <label for="ruc" class="font-medium text-gray-800 whitespace-nowrap">RUC:</label>
+                            <input type="text" id="ruc" name="ruc"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500"
+                                readonly>
+                        </div>
+
+                        <!-- <div>
+                            <label for="contacto" class="font-medium text-gray-800 whitespace-nowrap">Contacto:</label>
+                            <input type="text" id="contacto" name="contacto"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500"
+                                readonly>
+                        </div> -->
+
+                        <div>
+                            <label for="correo_admin" class="font-medium text-gray-800 whitespace-nowrap">Correo:</label>
+                            <input type="text" id="correo_admin" name="correo_admin"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500"
+                                readonly>
+                        </div>
+
+                        <div>
+                            <label for="telefono" class="font-medium text-gray-800 whitespace-nowrap">Teléfono:</label>
+                            <input type="text" id="telefono" name="telefono"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500"
+                                readonly>
+                        </div>
+
+                        <div>
+                            <label for="direccion"
+                                class="font-medium text-gray-800 whitespace-nowrap">Dirección:</label>
+                            <input type="text" id="direccion" name="direccion"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500"
+                                readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📝 Bloque de Observaciones (1/4 del espacio) -->
+                <div class="md:basis-1/4">
+                    <textarea name="detalle_facturacion" id="detalle_facturacion" rows="7"
+                        class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 resize-none"
+                        placeholder="Escribe observaciones o información extra aquí..."></textarea>
+                </div>
+
+            </div>
+
+            <!-- Modal ESTATICOS-->
+            <div id="modal-ubicaciones"
+                class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-2/3 lg:w-1/2 p-6 relative">
+
+                    <!-- Botón para cerrar el modal -->
+                    <button onclick="document.getElementById('modal-ubicaciones').classList.add('hidden')"
+                        class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
+                        ✕
+                    </button>
+
+                    <!-- Contenido del modal -->
+                    <h2 class="text-lg font-semibold mb-4 text-gray-800">Seleccionar Ubicaciones:</h2>
+
+                    <div
+                        class="mb-4 p-4 bg-gray-100 border border-black rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                        <label for="anunciante" class="block mb-1 font-medium text-gray-800 col-span-3"></label>
+
+                        <!-- Contenedor scroll -->
+                        <div
+                            class="col-span-3 max-h-80 overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 rounded-lg">
+                            <table class="w-full border border-gray-300 rounded-lg overflow-hidden text-sm text-left">
+                                <thead class="bg-gray-800 text-white sticky top-0 z-10">
+                                    <tr>
+                                        <th class="px-4 py-2 text-center w-8">✔</th>
+                                        <th class="px-4 py-2 ">Código</th>
+                                        <th class="px-4 py-2">Dirección</th>
+                                        <th class="px-4 py-2">Fecha Inicio</th>
+                                        <th class="px-4 py-2">Fecha Fin</th>
+                                        <th class="px-4 py-2 whitespace-nowrap">Tarifa Fria/mes</th>
+                                        <th class="px-4 py-2 whitespace-nowrap">Tarifa/mes</th>
+                                        <!-- <th class="px-4 py-2">Días</th> -->
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ubicacion in listado_ubicaciones %}
+                                    <tr data-ubicacion-id="{{ ubicacion.id }}" class="fila-ubicacion"
+                                        class="{% cycle 'bg-white' 'bg-gray-100' %} hover:bg-gray-200 transition-colors">
+                                        <td class="px-4 py-2 text-center">
+                                            <input type="checkbox" name="ubicaciones" value="{{ ubicacion.id }}"
+                                                data-codigo="{{ ubicacion.codigo }}"
+                                                data-direccion="{{ ubicacion.direccion }}"
+                                                data-referencia="{{ ubicacion.referencia }}"
+                                                class="checkbox-ubicacion rounded text-gray-600 focus:ring-gray-500">
+                                        </td>
+                                        <td title="{{ ubicacion.medidas }} (Largo x Alto)" class="tooltip"
+                                            class="px-4 py-2 font-medium text-gray-800 whitespace-nowrap">
+                                            {{ubicacion.codigo}}</td>
+                                        <td class="px-4 py-2 text-gray-700">{{ ubicacion.direccion }}</td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="date" name="fecha_inicio_{{ ubicacion.id }}"
+                                                class="fecha-inicio w-full border border-gray-300 rounded-lg px-2 py-1 text-sm disabled:bg-gray-200">
+                                        </td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="date" name="fecha_fin_{{ ubicacion.id }}"
+                                                class="fecha-fin w-full border border-gray-300 rounded-lg px-2 py-1 text-sm disabled:bg-gray-200">
+                                        </td>
+                                        <td class="px-4 py-2 text-gray-700">{{ ubicacion.tarifa_fria }}</td>
+                                        <td class="px-2 py-2 text-center">
+                                            <input type="number" id="tarifa_mes" name="tarifa_mes" placeholder="0.00"
+                                                step="0.01" 
+                                                class="rounded-lg border border-black shadow-sm bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right" />
+                                        </td>
+                                        <!-- <td class="px-2 py-2 text-center">
+                                            <input type="number" id="dias_dif" name="dias_dif" readonly
+                                                class="w-20 rounded-lg border-gray-300 shadow-sm bg-gray-100 focus:ring-0 text-center" />
+                                        </td> -->
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-sm">
+                                            <span class="msg-disponibilidad font-medium"></span>
+                                        </td>
+                                        <td colspan="5" class="text-center text-sm">
+                                            <span class="msg-tarifa font-medium"></span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- Botones de acción -->
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <button type="button" onclick="document.getElementById('modal-ubicaciones').classList.add('hidden')"
+                            class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
+                            Cancelar
+                        </button>
+                        <button type="button" onclick="guardarSeleccionUbicaciones()" id="boton-fijas"
+                            class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
+                            Guardar selección
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Modal DIGITALES -->
+            <div id="modal-ubicaciones-digitales"
+                class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-2/3 lg:w-1/2 p-4 relative">
+
+                    <!-- Botón cerrar -->
+                    <button onclick="document.getElementById('modal-ubicaciones-digitales').classList.add('hidden')"
+                        class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
+
+                    <h2 class="text-lg font-semibold mb-4 text-gray-800">Seleccionar Ubicaciones Digitales</h2>
+
+                    <!-- Contenedor scroll general -->
+                    <div class="max-h-[70vh] overflow-y-auto space-y-4">
+
+                        {% for ubicacion, slots in ubicaciones_con_slots.items %}
+                        <!-- Acordeón por ubicación -->
+                        <div class="border border-gray-300 rounded-xl overflow-hidden shadow-sm">
+                            <button type="button"
+                                title="Medidas: {{ ubicacion.medidas }} Pixeles: {{ubicacion.medidas_pixel}} Pitch: {{ubicacion.pixel_pitch}}"
+                                class="w-full flex justify-between items-center bg-gray-100 hover:bg-gray-200 px-4 py-2 text-left font-semibold text-gray-800"
+                                onclick="toggleSlots('{{ ubicacion.id }}')">
+                                <span>{{ ubicacion.codigo }} — {{ ubicacion.direccion }}</span>
+                                <span id="icon-{{ ubicacion.id }}">▼</span>
+                            </button>
+
+                            <!-- Contenedor interno oculto -->
+                            <div id="slots-{{ ubicacion.id }}" class="hidden">
+                                <table class="w-full text-sm border-t border-gray-300">
+                                    <thead class="bg-gray-800 text-white">
+                                        <tr>
+                                            <th class="px-2 py-1 text-center w-10">✔</th>
+                                            <th class="px-2 py-1 text-center">Slot</th>
+                                            <th class="px-2 py-1 text-center">Tarifa Fria</th>
+                                            <th class="px-2 py-1 text-center">Inicio-Fin</th>
+                                            <th class="px-2 py-1 text-center">Tarifa Mes</th>
+                                            <th class="px-2 py-1 text-center"> </th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for slot in slots %}
+                                        <tr data-slot-id="{{ slot.id }}" data-ubicacion-id="{{ slot.ubicacion.id }}"
+                                            data-tipo-venta="{{ slot.tipo_venta.id }}"
+                                            data-es-canje="{{ slot.es_canje|yesno:'true,false' }}"
+                                            class="{% cycle 'bg-white' 'bg-gray-50' %} hover:bg-gray-100 transition fila-slot">
+                                            <td class="px-2 py-1 text-center">
+                                                <input type="checkbox" name="ubicaciones_digitales"
+                                                    value="{{ slot.id }}" data-ubicacion="{{ ubicacion.id }}"
+                                                    data-slot="{{ slot.numero_slot }}"
+                                                    data-codigo="{{ ubicacion.codigo }}"
+                                                    data-direccion="{{ ubicacion.direccion }}"
+                                                    class="rounded text-gray-600 focus:ring-gray-500"
+                                                    onchange="actualizarSeleccionDigital(this)">
+                                            </td>
+                                            <td class="px-2 py-1 text-center font-medium text-gray-800">
+                                                {{ slot.numero_slot }}
+                                            </td>
+                                            <td class="px-2 py-1 text-center">
+                                                {{ slot.tarifa_fria}}
+                                            </td>
+                                            <td class="px-2 py-1">
+                                                <div id="rangos-{{ slot.id }}" class="space-y-2">
+                                                    <!-- fila inicial: inputs para agregar un primer rango -->
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="date"
+                                                            class="border border-gray-300 rounded-lg px-2 py-1 text-sm fecha-inicio"
+                                                            placeholder="Inicio">
+                                                        <input type="date"
+                                                            class="border border-gray-300 rounded-lg px-2 py-1 text-sm fecha-fin"
+                                                            placeholder="Fin">
+                                                        <input type="number" step="0.01"
+                                                            class="border border-gray-300 rounded-lg px-2 py-1 text-sm tarifa-mes text-right"
+                                                            placeholder="Tarifa/mes">
+                                                        <span
+                                                            class="msg-disponibilidad-digital text-xs ml-2 text-gray-700"></span>
+                                                        <button type="button" class="text-red-600 hover:text-red-800"
+                                                            onclick="this.parentElement.remove()">🗑️</button>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td class="px-2 py-1 text-center">
+                                                <button type="button" class="text-green-600 hover:text-green-800"
+                                                    onclick="agregarRango('{{ slot.id }}')">➕</button>
+                                            </td>
+                            </div>
+                        </div>
+                        </tr>
+                        <tr>
+                            <td colspan="5" class="text-center text-sm">
+                                <span class="msg-disponibilidad-digital text-xs ml-2 text-gray-700"></span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Botones -->
+            <div class="flex justify-end mt-4 space-x-2">
+                <button type="button"  onclick="document.getElementById('modal-ubicaciones-digitales').classList.add('hidden')"
+                    class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Cancelar</button>
+                <button type="button" onclick="guardarSeleccionUbicacionesDigitales()" id="btn-digital"
+                    class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">Guardar
+                    selección</button>
+            </div>
+    </div>
+    </div>
+
+    <!--MODAL DE EMPRESA-->
+
+    <div id="modalEmpresa" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-xl">
+            <h3 class="text-xl font-semibold mb-4 text-gray-700">Buscar Anunciante:</h3>
+
+            <input type="text" oninput="buscarProveedor(this.value)"
+                placeholder="Buscar por nombre comercial, razón social o RUC"
+                class="w-full mb-4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm">
+
+            <div class="overflow-auto max-h-64">
+                <table class="table-auto w-full border border-gray-300 text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-2 py-1 border">Anunciante</th>
+                            <th class="px-2 py-1 border">RUC</th>
+                            <th class="px-2 py-1 border">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaResultadosProveedor">
+                        <tr>
+                            <td colspan="3" class="text-center py-2 text-gray-500">Escribe para buscar...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-right mt-4">
+                <button onclick="cerrarModalProveedor()"
+                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-10 text-center">
+        <button type="submit"
+            class="bg-gray-600 hover:bg-gray-700 text-white font-semibold text-sm py-2 px-8 rounded-xl shadow-lg transition duration-300 ease-in-out">
+            Guardar Nota de Pedido
+        </button>
+    </div>
+    <input type="hidden" name="slot_ocupaciones_json" id="slot_ocupaciones_json" value="[]">
+    <input type="hidden" name="ubicaciones_seleccionadas" id="ubicaciones_seleccionadas">
+    </form>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const tipoPago = document.getElementById("tipo_pago");
+            const dias = document.getElementById("dias");
+            const msgError = document.getElementById("msg-error"); // 🔹 ahora sí definido
+
+            function controlarDias() {
+                const valor = parseInt(tipoPago.value, 10);
+
+                if (valor === 1 || valor === 3) {
+                    // Contado (1) o Gratuito (3)
+                    dias.value = "1";            // Forzar a 0 días (id=1)
+                    dias.disabled = true;        // Bloquear cambios
+                    msgError.classList.add("hidden"); // Ocultar error
+                } else {
+                    // Crédito u otros
+                    dias.disabled = false;
+
+                    if (dias.value === "1") {
+                        msgError.textContent = "El crédito no puede ser a 0 días.";
+                        msgError.classList.remove("hidden");
+                        // 🔹 Si quieres obligar a cambiar, puedes limpiar el valor:
+                        // dias.value = "";
+                        dias.focus()
+                    } else {
+                        msgError.classList.add("hidden");
+                    }
+                }
+            }
+
+            // Ejecutar al cargar
+            controlarDias();
+
+            // Ejecutar al cambiar el tipo de pago
+            tipoPago.addEventListener("change", controlarDias);
+
+            // Ejecutar también al cambiar días
+            dias.addEventListener("change", controlarDias);
+        });
+    </script>
+
+    <script>
+        function guardarSeleccionUbicaciones() {
+            // Seleccionamos todos los checkboxes marcados
+            const checkboxes = document.querySelectorAll('.checkbox-ubicacion:checked');
+            const ids = [];
+            const ubicaciones = [];
+
+            // 🧩 Variables para validar
+            let valid = true;
+            let mensajeError = '';
+
+            // Recorremos los seleccionados
+            checkboxes.forEach(chk => {
+                const id = chk.value;
+                const codigo = chk.dataset.codigo;
+                const direccion = chk.dataset.direccion;
+                const referencia = chk.dataset.referencia;
+
+                // Buscar los inputs dentro de la misma fila
+                const row = chk.closest('tr');
+                const fechaInicio = row.querySelector('.fecha-inicio')?.value || '';
+                const fechaFin = row.querySelector('.fecha-fin')?.value || '';
+                const tarifaMes = parseFloat(row.querySelector('input[name="tarifa_mes"]')?.value) || 0;
+
+                // 🔍 Validación: fechas obligatorias
+                if (!fechaInicio || !fechaFin) {
+                    valid = false;
+                    mensajeError += `- ${codigo} (${direccion}): faltan fechas.\n`;
+                } else {
+                    const inicio = new Date(fechaInicio);
+                    const fin = new Date(fechaFin);
+
+                    if (inicio > fin) {
+                        valid = false;
+                        mensajeError += `- ${codigo} (${direccion}): la fecha de inicio no puede ser posterior a la fecha de fin.\n`;
+                    }
+                }
+
+                // Calcular la diferencia de días (+1 para incluir el día de inicio)
+                let diasDif = '';
+                let montoTotal = '';
+                if (fechaInicio && fechaFin) {
+                    const inicio = new Date(fechaInicio);
+                    const fin = new Date(fechaFin);
+                    const diffMs = fin - inicio;
+                    const diffDias = diffMs / (1000 * 60 * 60 * 24);
+                    if (diffDias >= 0) {
+                        diasDif = diffDias + 1;
+
+                        // 💰 Calcular monto proporcional
+                        if (tarifaMes > 0) {
+                            const tarifaDia = tarifaMes / 30;
+                            tarifaPorDia = tarifaMes / 30;
+                            montoTotal = (tarifaDia * diasDif).toFixed(2);
+                        }
+                    }
+                }
+
+                // Guardar en arrays
+                ids.push(id);
+                ubicaciones.push({ id, codigo, direccion, referencia, fechaInicio, fechaFin, diasDif, tarifaMes, montoTotal, tarifaPorDia });
+            });
+
+            // 🚫 Validación final
+            if (!valid) {
+                alert(`⚠️ Debes ingresar fecha de inicio y fecha fin para las siguientes ubicaciones:\n\n${mensajeError}`);
+                return;
+            }
+
+            // Referencias al DOM
+            const tbody = document.getElementById('tbody-ubicaciones');
+            const form = document.querySelector('form');
+
+            // Limpiamos el contenido anterior del resumen
+            tbody.innerHTML = '';
+
+            if (ubicaciones.length > 0) {
+                ubicaciones.forEach(u => {
+                    // Mostrar resumen en la tabla principal
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td class="px-4 py-2 border-t font-medium text-gray-800">${u.codigo}</td>
+                <td class="px-4 py-2 border-t text-gray-700 text-center whitespace-nowrap w-32">${u.fechaInicio || '-'}</td>
+                <td class="px-4 py-2 border-t text-gray-700 text-center whitespace-nowrap w-32">${u.fechaFin || '-'}</td>
+                <td class="px-4 py-2 border-t text-gray-700 text-center">${u.diasDif || '-'}</td>
+                <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaMes?.toFixed?.(2) || '0.00'}</td>
+                <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaPorDia?.toFixed?.(2) || '0.00'}</td>
+                <td class="px-4 py-2 border-t font-semibold text-right text-green-700">${u.montoTotal || '0.00'}</td>
+            `;
+                    tbody.appendChild(row);
+
+                    // Crear o actualizar inputs hidden para enviar al backend
+                    crearOActualizarHidden(form, `fecha_inicio_${u.id}`, u.fechaInicio);
+                    crearOActualizarHidden(form, `fecha_fin_${u.id}`, u.fechaFin);
+                    crearOActualizarHidden(form, `dias_dif_${u.id}`, u.diasDif);
+                    crearOActualizarHidden(form, `tarifa_dia_${u.id}`, u.tarifaPorDia);
+                    crearOActualizarHidden(form, `monto_total_${u.id}`, u.montoTotal);
+                    crearOActualizarHidden(form, `tarifa_mes_${u.id}`, u.tarifaMes);
+                });
+            } else {
+                // Si no hay seleccionadas
+                tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="px-4 py-2 text-center text-gray-500 italic">
+                No hay ubicaciones seleccionadas
+            </td>
+        </tr>`;
+            }
+
+            // Limpiar inputs hidden previos de IDs
+            document.querySelectorAll('input[name="ubicaciones_seleccionadas"]').forEach(e => e.remove());
+
+            // Crear uno por cada ID (para Django)
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ubicaciones_seleccionadas';
+                input.value = id;
+                form.appendChild(input);
+            });
+
+            // --- Calcular la suma total de montos ---
+            let totalGeneral = 0;
+            ubicaciones.forEach(u => {
+                const monto = parseFloat(u.montoTotal) || 0;
+                totalGeneral += monto;
+            });
+
+            // --- Actualizar el campo "tarifa_neg" ---
+            const inputTarifaNeg = document.getElementById("tarifa_neg");
+            if (inputTarifaNeg) {
+                inputTarifaNeg.value = totalGeneral.toFixed(2);
+            }
+            // --- Calcular IGV (18%) y Total ---
+            const inputIGV = document.getElementById("igv");
+            const inputTotal = document.getElementById("total");
+
+            const igv = totalGeneral * 0.18;
+            const totalConIGV = totalGeneral + igv;
+
+            if (inputIGV) inputIGV.value = igv.toFixed(2);
+            if (inputTotal) inputTotal.value = totalConIGV.toFixed(2);
+
+            calcularTotalesGenerales()
+
+            // Cerrar el modal
+            document.getElementById('modal-ubicaciones').classList.add('hidden');
+        }
+
+        //ESTO CALCULOS EL IGV TOTAL Y EL MONTO TOTAL 
+
+        function calcularTotalesGenerales() {
+            // 🧾 Obtener los valores de los campos
+            const totalEstaticas = parseFloat(document.getElementById("tarifa_neg")?.value) || 0;
+            const totalDigitales = parseFloat(document.getElementById("tarifa_neg_dig")?.value) || 0;
+
+            // 💰 Subtotal (la suma de ambas)
+            const subtotal = totalEstaticas + totalDigitales;
+
+            // 🧾 Calcular IGV (18%)
+            const igv = subtotal * 0.18;
+
+            // 💵 Total general
+            const total = subtotal + igv;
+
+            // 🖋️ Escribir los resultados en los inputs
+            const inputIgv = document.getElementById("igv");
+            const inputTotal = document.getElementById("total");
+
+            if (inputIgv) inputIgv.value = igv.toFixed(2);
+            if (inputTotal) inputTotal.value = total.toFixed(2);
+
+            // 🔍 (opcional) mostrar en consola para depuración
+            console.log(`💵 Subtotal: ${subtotal.toFixed(2)} | IGV: ${igv.toFixed(2)} | Total: ${total.toFixed(2)}`);
+        }
+
+        // --- Función auxiliar para crear/actualizar inputs hidden ---
+        function crearOActualizarHidden(form, name, value) {
+            let input = form.querySelector(`[name="${name}"]`);
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                form.appendChild(input);
+            }
+            input.value = value;
+        }
+    </script>
+
+    <script>
+        // Obtén los elementos del DOM
+        const fechaInicio = document.getElementById('fecha_inicio');
+        const fechaFin = document.getElementById('fecha_fin');
+        const diasInput = document.getElementById('dias_dif');
+
+        // Función para calcular la diferencia de días
+        function calcularDias() {
+            if (fechaInicio.value && fechaFin.value) {
+                const inicio = new Date(fechaInicio.value);
+                const fin = new Date(fechaFin.value);
+
+                // Calcula la diferencia en milisegundos
+                const diferenciaMs = fin - inicio;
+
+                // Convierte a días (1 día = 1000 ms * 60 s * 60 min * 24 h)
+                const diferenciaDias = Math.round(diferenciaMs / (1000 * 60 * 60 * 24));
+
+                // Muestra el resultado en el input de días
+                diasInput.value = diferenciaDias >= 0 ? diferenciaDias : 0;
+            } else {
+                diasInput.value = '';
+            }
+        }
+
+        // Escucha cambios en los inputs de fecha
+        fechaInicio.addEventListener('change', calcularDias);
+        fechaFin.addEventListener('change', calcularDias);
+    </script>
+
+    <script>
+        const tarifaInput = document.getElementById('tarifa');
+        const tarifaNegInput = document.getElementById('tarifa_neg');
+        const igvInput = document.getElementById('igv');
+        const totalInput = document.getElementById('total');
+
+        // Función para actualizar los cálculos
+        function actualizarValores(origen) {
+            let tarifa = parseFloat(tarifaInput.value) || 0;
+            let tarifaNeg = parseFloat(tarifaNegInput.value) || 0;
+            let igv = 0;
+            let total = 0;
+
+            // Condición 1: si tarifa > 0
+            if (origen === 'tarifa' && tarifa > 0) {
+                tarifaNeg = tarifa;
+                tarifaNegInput.value = tarifaNeg.toFixed(2);
+                igv = tarifaNeg * 0.18;
+                total = tarifaNeg + igv;
+            }
+
+            // Condición 2: si usuario modifica tarifa_neg
+            if (origen === 'tarifa_neg' && tarifaNeg > 0) {
+                tarifaInput.value = tarifa.toFixed(2);
+                igv = tarifaNeg * 0.18;
+                total = tarifaNeg + igv;
+            }
+
+            // Actualiza los campos de resultado
+            igvInput.value = igv.toFixed(2);
+            totalInput.value = total.toFixed(2);
+        }
+
+        // Escuchamos cambios en ambos campos
+        tarifaInput.addEventListener('input', () => actualizarValores('tarifa'));
+        tarifaNegInput.addEventListener('input', () => actualizarValores('tarifa_neg'));
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectCliente = document.getElementById('razon_social');
+            const inputRuc = document.getElementById('ruc');
+            const inputDireccion = document.getElementById('direccion');
+            const inputTelefono = document.getElementById('telefono');
+            // const inputContacto = document.getElementById('contacto');
+            const inputCorreo = document.getElementById('correo_admin');
+
+
+            selectCliente.addEventListener('change', function () {
+                const option = this.options[this.selectedIndex];
+                inputRuc.value = option.dataset.ruc || '';
+                inputDireccion.value = option.dataset.direccion || '';
+                inputTelefono.value = option.dataset.telefono || '';
+                // inputContacto.value = option.dataset.contacto || '';
+                inputCorreo.value = option.dataset.correo || '';
+            });
+        });
+    </script>
+
+    <script>
+        function toggleFechas(checkbox) {
+            const row = checkbox.closest('tr');
+            const fechaInicio = row.querySelector('.fecha-inicio');
+            const fechaFin = row.querySelector('.fecha-fin');
+
+            if (checkbox.checked) {
+                fechaInicio.disabled = false;
+                fechaFin.disabled = false;
+            } else {
+                fechaInicio.disabled = true;
+                fechaFin.disabled = true;
+                fechaInicio.value = '';
+                fechaFin.value = '';
+            }
+        }
+    </script>
+
+    <script>
+        function toggleSlots(ubicacionId) {
+            const section = document.getElementById(`slots-${ubicacionId}`);
+            const icon = document.getElementById(`icon-${ubicacionId}`);
+
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                icon.textContent = '▲';
+            } else {
+                section.classList.add('hidden');
+                icon.textContent = '▼';
+            }
+        }
+    </script>
+
+
+    <!-- LLENAR UBICACIONES DIGITALES  -->
+
+    <script>
+        /* ---------- Estado global ---------- */
+        let seleccionUbicacionesDigitales = []; // { slot_id, ubicacion_id, codigo, direccion, slot, rangos: [{inicio,fin}, ...] }
+
+        /* ---------- helper: busca slot por id ---------- */
+        function findIndexBySlotId(slotId) {
+            return seleccionUbicacionesDigitales.findIndex(item => String(item.slot_id) === String(slotId));
+        }
+
+        /* ---------- checkbox: seleccionar/desmarcar slot ---------- */
+        function actualizarSeleccionDigital(checkbox) {
+            const idSlot = checkbox.value;
+            const row = checkbox.closest('tr');
+            const ubicacionId = checkbox.dataset.ubicacion || row.dataset.ubicacion || '';
+            const codigo = checkbox.dataset.codigo || (row.querySelector('td:nth-child(2)')?.innerText?.trim()) || '';
+            const direccion = checkbox.dataset.direccion || (row.querySelector('td:nth-child(3)')?.innerText?.trim()) || '';
+            const slot = checkbox.dataset.slot || (row.querySelector('td:nth-child(2)')?.innerText?.trim()) || '';
+
+            if (checkbox.checked) {
+                // Si no existe el slot en el array, lo creamos (con rangos vacíos por ahora)
+                if (findIndexBySlotId(idSlot) === -1) {
+                    seleccionUbicacionesDigitales.push({
+                        slot_id: idSlot,
+                        ubicacion_id: ubicacionId,
+                        codigo: codigo,
+                        direccion: direccion,
+                        slot: slot,
+                        rangos: []
+                    });
+                }
+            } else {
+                // Si se desmarca, borramos ese slot (y sus rangos)
+                seleccionUbicacionesDigitales = seleccionUbicacionesDigitales.filter(item => String(item.slot_id) !== String(idSlot));
+            }
+        }
+
+        /* ---------- agregar un nuevo rango con tarifa por fila ---------- */
+        function agregarRango(slotId) {
+            const container = document.getElementById(`rangos-${slotId}`);
+            if (!container) return;
+
+            // Obtener el ID de ubicación desde el dataset del contenedor o de alguna fila superior
+            const ubicacionId = container.closest('[data-ubicacion-id]')?.dataset.ubicacionId || '';
+
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 fila-slot';
+            div.dataset.slotId = slotId;           // 🔹 Agregamos dataset para la validación
+            div.dataset.ubicacionId = ubicacionId; // 🔹 También el de ubicación
+
+            div.innerHTML = `
+        <input type="date" class="border border-gray-300 rounded-lg px-2 py-1 text-sm fecha-inicio" placeholder="Inicio">
+        <input type="date" class="border border-gray-300 rounded-lg px-2 py-1 text-sm fecha-fin" placeholder="Fin">
+        <input type="number" step="0.01" class="border border-gray-300 rounded-lg px-2 py-1 text-sm tarifa-mes text-right" placeholder="Tarifa/mes">
+        <span class="msg-disponibilidad-digital text-xs ml-2"></span>
+        <button type="button" class="text-red-600 hover:text-red-800" onclick="this.parentElement.remove()">🗑️</button>
+    `;
+
+            container.appendChild(div);
+            agregarValidacionFila(div)
+        }
+
+        /* ---------- tomar todos los inputs del modal y actualizar el array ---------- */
+        function actualizarFechasDesdeModal() {
+            // Para cada slot seleccionado en el array, leemos sus inputs
+            seleccionUbicacionesDigitales.forEach(item => {
+                const cont = document.getElementById(`rangos-${item.slot_id}`);
+                if (!cont) {
+                    item.rangos = [];
+                    return;
+                }
+                const filas = Array.from(cont.querySelectorAll('div.flex'));
+                const rangos = [];
+                filas.forEach(fila => {
+                    const inicio = fila.querySelector('.fecha-inicio')?.value || '';
+                    const fin = fila.querySelector('.fecha-fin')?.value || '';
+                    const tarifa = fila.querySelector('.tarifa-mes')?.value || '';
+                    // guardamos solo rangos completos (puedes cambiar para alertar en vacío)
+                    if (inicio && fin && tarifa) {
+                        rangos.push({ inicio, fin, tarifa });
+                    } else if (inicio && fin && !tarifa) {
+                        alert("⚠️ Debes ingresar la tarifa mensual para todos los rangos seleccionados.");
+                    }
+                });
+                item.rangos = rangos;
+            });
+        }
+
+        /* ---------- renderizar la tabla resumen (1 fila por rango) y actualizar hidden ---------- */
+        function guardarSeleccionUbicacionesDigitales() {
+            // 1) actualizar desde inputs
+            actualizarFechasDesdeModal();
+
+            // 2) validar: cada slot seleccionado debe tener al menos un rango
+            const faltantes = [];
+            seleccionUbicacionesDigitales.forEach(item => {
+                if (!item.rangos || item.rangos.length === 0) {
+                    faltantes.push(`${item.codigo || ('slot ' + item.slot)}`);
+                }
+            });
+            if (faltantes.length > 0) {
+                alert('Debes agregar al menos un rango de fechas a: \n' + faltantes.join('\n'));
+                return; // detiene el guardado
+            }
+
+            // 3) renderizar resumen (una fila por rango)
+            const tbody = document.getElementById('body-seleccion-digital');
+            tbody.innerHTML = '';
+            seleccionUbicacionesDigitales.forEach(item => {
+                item.rangos.forEach(rango => {
+
+                    // 🗓️ Calcular días entre inicio y fin
+                    const fechaInicio = new Date(rango.inicio);
+                    const fechaFin = new Date(rango.fin);
+                    let dias = 0;
+
+                    if (!isNaN(fechaInicio) && !isNaN(fechaFin)) {
+                        dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1; // incluye ambos días
+                    }
+
+                    // 💰 Calcular monto total (opcional)
+                    const tarifa = parseFloat(rango.tarifa).toFixed(2) || 0;
+                    const tarifaDiaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
+                    const montoTotal = tarifa > 0 && dias > 0 ? (tarifaDiaria * dias).toFixed(2) : "0.00";
+
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+        <td class="px-3 py-2">${item.codigo || '-'}</td>
+        <td class="px-3 py-2 text-center">${item.slot || '-'}</td>
+        <td class="px-3 py-2 text-center">${rango.inicio}</td>
+        <td class="px-3 py-2 text-center">${rango.fin}</td>
+        <td class="px-3 py-2 text-center">${dias}</td>
+        <td class="px-3 py-2 text-center">${tarifa}</td>
+        <td class="px-3 py-2 text-center">${tarifaDiaria}</td>
+        <td class="px-3 py-2 text-center font-semibold text-green-700">${montoTotal}</td>
+        
+      `;
+                    tbody.appendChild(tr);
+                });
+            });
+
+            // 4) actualizar input hidden JSON
+            let hidden = document.getElementById('slot_ocupaciones_json');
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'slot_ocupaciones_json';
+                hidden.id = 'slot_ocupaciones_json';
+                document.querySelector('form').appendChild(hidden);
+            }
+            // Guardamos sólo las filas que tienen rangos (como lista plana de ocupaciones)
+            const listaOcupaciones = [];
+            seleccionUbicacionesDigitales.forEach(item => {
+                item.rangos.forEach(r => {
+                    // 🧮 Calcular días y montos antes de agregar al JSON
+                    const fechaInicio = new Date(r.inicio);
+                    const fechaFin = new Date(r.fin);
+                    let dias = 0;
+
+                    if (!isNaN(fechaInicio) && !isNaN(fechaFin)) {
+                        dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
+                    }
+
+                    const tarifa = parseFloat(r.tarifa) || 0;
+                    const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
+                    const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
+
+                    diario = tarifa_diaria;
+                    total = monto_total;
+
+                    listaOcupaciones.push({
+                        ubicacion_id: item.ubicacion_id,
+                        slot_id: item.slot_id,
+                        codigo: item.codigo,
+                        direccion: item.direccion,
+                        slot: item.slot,
+                        fecha_inicio: r.inicio,
+                        fecha_fin: r.fin,
+                        dias: dias,
+                        tarifa_mes: r.tarifa,
+                        tarifa_dia: diario,
+                        monto_total: total
+
+                    });
+                });
+            });
+            hidden.value = JSON.stringify(listaOcupaciones);
+
+            // 💰 Calcular la sumatoria total de los montos digitales
+            let totalDigitales = 0;
+            listaOcupaciones.forEach(o => {
+                totalDigitales += parseFloat(o.monto_total) || 0;
+            });
+
+            // 🧾 Mostrarlo en el input total
+            const inputTotalDig = document.getElementById("tarifa_neg_dig");
+            if (inputTotalDig) {
+                inputTotalDig.value = totalDigitales.toFixed(2);
+            }
+            console.log("🧩 JSON Final slot_ocupaciones_json:", JSON.stringify(listaOcupaciones, null, 2));
+
+            calcularTotalesGenerales()
+
+            // 5) cerrar modal
+            const modal = document.getElementById('modal-ubicaciones-digitales');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // ESTO CALCULA EL TOTAL GENERAL CADA VEZ QUE SE CAMBIA ALGO 
+
+        function calcularTotalesGenerales() {
+            // 🧾 Obtener los valores de los campos
+            const totalEstaticas = parseFloat(document.getElementById("tarifa_neg")?.value) || 0;
+            const totalDigitales = parseFloat(document.getElementById("tarifa_neg_dig")?.value) || 0;
+
+            // 💰 Subtotal (la suma de ambas)
+            const subtotal = totalEstaticas + totalDigitales;
+
+            // 🧾 Calcular IGV (18%)
+            const igv = subtotal * 0.18;
+
+            // 💵 Total general
+            const total = subtotal + igv;
+
+            // 🖋️ Escribir los resultados en los inputs
+            const inputIgv = document.getElementById("igv");
+            const inputTotal = document.getElementById("total");
+
+            if (inputIgv) inputIgv.value = igv.toFixed(2);
+            if (inputTotal) inputTotal.value = total.toFixed(2);
+
+            // 🔍 (opcional) mostrar en consola para depuración
+            console.log(`💵 Subtotal: ${subtotal.toFixed(2)} | IGV: ${igv.toFixed(2)} | Total: ${total.toFixed(2)}`);
+        }
+
+
+        /* ---------- eliminar un rango específico en la tabla resumen ---------- */
+        function eliminarRango(slotId, inicio, fin) {
+            const idx = findIndexBySlotId(slotId);
+            if (idx === -1) return;
+            const before = seleccionUbicacionesDigitales[idx].rangos.length;
+            seleccionUbicacionesDigitales[idx].rangos = seleccionUbicacionesDigitales[idx].rangos.filter(r => !(r.inicio === inicio && r.fin === fin));
+            const after = seleccionUbicacionesDigitales[idx].rangos.length;
+
+            // si ya no quedan rangos para ese slot, borrar todo el slot y desmarcar checkbox
+            if (after === 0) {
+                // desmarcar checkbox en modal si existe
+                const chk = document.querySelector(`input[name="ubicaciones_digitales"][value="${slotId}"]`);
+                if (chk) chk.checked = false;
+                seleccionUbicacionesDigitales = seleccionUbicacionesDigitales.filter(i => String(i.slot_id) !== String(slotId));
+            }
+
+            // re-renderizar la tabla
+            guardarSeleccionUbicacionesDigitales();
+        }
+
+        /* ---------- asegurar que antes de enviar el form el hidden está actualizado ---------- */
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form');
+            if (!form) return;
+
+            // si el usuario presiona Submit, aseguramos que el hidden contenga los datos actuales
+            form.addEventListener('submit', function (e) {
+                // actualizar desde modal inputs por si no se guardó el modal
+                actualizarFechasDesdeModal();
+
+                // reconstruir hidden (igual que en guardarSeleccionUbicacionesDigitales)
+                const listaOcupaciones = [];
+                seleccionUbicacionesDigitales.forEach(item => {
+                    item.rangos.forEach(r => {
+                        // recalculamos por seguridad
+                        const fechaInicio = new Date(r.inicio);
+                        const fechaFin = new Date(r.fin);
+                        let dias = 0;
+                        if (!isNaN(fechaInicio) && !isNaN(fechaFin)) {
+                            dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
+                        }
+
+                        const tarifa = parseFloat(r.tarifa) || 0;
+                        const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
+                        const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
+
+                        listaOcupaciones.push({
+                            ubicacion_id: item.ubicacion_id,
+                            slot_id: item.slot_id,
+                            codigo: item.codigo,
+                            direccion: item.direccion,
+                            slot: item.slot,
+                            fecha_inicio: r.inicio,
+                            fecha_fin: r.fin,
+                            dias: dias,
+                            tarifa_mes: tarifa,
+                            tarifa_dia: tarifa_diaria,
+                            monto_total: monto_total
+                        });
+                    });
+                });
+                let hidden = document.getElementById('slot_ocupaciones_json');
+                if (!hidden) {
+                    hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'slot_ocupaciones_json';
+                    hidden.id = 'slot_ocupaciones_json';
+                    form.appendChild(hidden);
+                }
+                hidden.value = JSON.stringify(listaOcupaciones);
+                // el form continúa y se envía normalmente
+            });
+        });
+    </script>
+
+    <script>
+        function abrirModalProveedor() {
+            document.getElementById("modalEmpresa").classList.remove("hidden");
+            document.getElementById("inputBuscarProveedor").focus();
+        }
+
+        function cerrarModalProveedor() {
+            document.getElementById("modalEmpresa").classList.add("hidden");
+        }
+
+        function seleccionarProveedor(id, nombre_comercial) {
+            document.getElementById("proveedor_id").value = id;
+            document.getElementById("proveedor_nombre").value = nombre_comercial;
+            cerrarModalProveedor();
+            obtenerRecomendaciones(id);
+        }
+
+        function buscarProveedor(valor) {
+            fetch(`/buscar-empresa/?q=${encodeURIComponent(valor)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tabla = document.getElementById("tablaResultadosProveedor");
+                    tabla.innerHTML = "";
+                    if (data.length === 0) {
+                        tabla.innerHTML = '<tr><td colspan="2" class="text-center py-2 text-gray-500">Sin resultados</td></tr>';
+                    } else {
+                        data.forEach(prov => {
+                            tabla.innerHTML += `
+              <tr>
+                <td class="border px-2 py-1">${prov.nombre_comercial}</td>
+                <td class="border px-2 py-1">${prov.ruc}</td>
+                <td class="border px-2 py-1 text-center">
+                  <button type="button" onclick="seleccionarProveedor('${prov.id}', '${prov.nombre_comercial}')"
+                          class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs">
+                    Seleccionar
+                  </button>
+                </td>
+              </tr>
+            `;
+                        });
+                    }
+                });
+        }
+    </script>
+
+    <!-- VALIDAR QUE EMMPRESA NO ESTE VACIO-->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+
+            form.addEventListener("submit", function (e) {
+                const clienteId = document.getElementById("proveedor_id").value.trim();
+                const clienteNombre = document.getElementById("proveedor_nombre").value.trim();
+
+                // Si falta el cliente, detenemos el envío
+                if (!clienteId || !clienteNombre) {
+                    e.preventDefault(); // 🚫 No enviamos
+                    alert("⚠️ Debes seleccionar una empresa antes de continuar.");
+                    document.getElementById("proveedor_nombre").focus();
+
+                    // Solo detenemos, NO hacemos ningún form.submit() ni reintento automático
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    {% if abrir_pdf %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const pdfUrl = "{{ abrir_pdf|escapejs }}";
+            if (pdfUrl) {
+                window.open(pdfUrl, "_blank");
+
+                // limpiar parámetro para no abrirlo de nuevo
+                const url = new URL(window.location.href);
+                url.searchParams.delete("abrir_pdf");
+                window.history.replaceState({}, document.title, url.toString());
+            }
+        });
+    </script>
+    {% endif %}
+
+
+    <!--VALIDACION DE FIJAS -->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("✅ Script de validación para ubicaciones fijas cargado");
+            document.getElementById("boton-fijas").disabled = false;
+
+            const filas = document.querySelectorAll("#modal-ubicaciones tbody tr");
+            if (filas.length === 0) {
+                console.warn("⚠️ No hay filas de ubicaciones fijas");
+                return;
+            }
+
+            filas.forEach(fila => {
+                const checkbox = fila.querySelector(".checkbox-ubicacion");
+                const fechaInicio = fila.querySelector(".fecha-inicio");
+                const fechaFin = fila.querySelector(".fecha-fin");
+                const mensaje = fila.nextElementSibling.querySelector(".msg-disponibilidad");
+
+                if (!fechaInicio || !fechaFin) return;
+                document.getElementById("boton-fijas").disabled = true;
+                // Crear contenedor para mostrar mensajes
+
+                const validar = async () => {
+                    const fi = fechaInicio.value;
+                    const ff = fechaFin.value;
+
+                    // Limpiar mensajes previos
+                    mensaje.textContent = "";
+                    mensaje.style.color = "";
+                    mensaje.style.display = "block"; // Asegura que se muestre centrado
+                    mensaje.style.textAlign = "center";
+
+                    // Validar que ambas fechas estén presentes
+                    if (!fi || !ff) return;
+                    document.getElementById("boton-fijas").disabled = true;
+
+                    // ⚠️ Validar que la fecha fin no sea menor que la fecha inicio
+                    if (ff < fi) {
+                        mensaje.textContent = "⚠️ La fecha fin no puede ser menor que la fecha inicio";
+                        mensaje.style.color = "orange";
+                        fila.style.backgroundColor = "#fff6e6"; // Amarillo suave
+                        document.getElementById("boton-fijas").disabled = true;
+                        return;
+                    }
+
+                    // 🧠 Validar disponibilidad desde el servidor
+                    try {
+                        const resp = await fetch(
+                            `/api/verificar_disponibilidad/?ubicacion_id=${checkbox.value}&fecha_inicio=${fi}&fecha_fin=${ff}`
+                        );
+                        const data = await resp.json();
+
+                        mensaje.textContent = data.mensaje;
+                        if (data.ok) {
+                            mensaje.style.color = "green";
+                            fila.style.backgroundColor = "#e6ffe6"; // verde suave
+                            document.getElementById("boton-fijas").disabled = false;
+                        } else {
+                            mensaje.style.color = "red";
+                            fila.style.backgroundColor = "#ffe6e6"; // rojo suave
+                            document.getElementById("boton-fijas").disabled = true;
+                        }
+
+                    } catch (error) {
+                        console.error("❌ Error al verificar disponibilidad fija:", error);
+                        mensaje.textContent = "Error al verificar disponibilidad";
+                        mensaje.style.color = "red";
+                        fila.style.backgroundColor = "#fff0f0";
+                    }
+                };
+
+                fechaInicio.addEventListener("change", validar);
+                fechaFin.addEventListener("change", validar);
+                document.getElementById("boton-fijas").disabled = false;
+            });
+        });
+    </script>
+
+    <!--VALIDAR DIGITALES -->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("✅ Script digital listo");
+            const btnDigital = document.getElementById("btn-digital");
+            btnDigital.disabled = false;
+
+            function agregarValidacionFila(fila) {
+                const slotId = fila.dataset.slotId;
+                const ubicacionId = fila.dataset.ubicacionId;
+                const fechaInicio = fila.querySelector(".fecha-inicio");
+                const fechaFin = fila.querySelector(".fecha-fin");
+                const mensaje = fila.querySelector(".msg-disponibilidad-digital");
+
+                if (!fechaInicio || !fechaFin) {
+                    console.warn(`⚠️ Fila ${slotId} sin inputs de fecha`);
+                    return;
+                }
+
+                const validar = async () => {
+                    const fi = fechaInicio.value;
+                    const ff = fechaFin.value;
+
+                    // 🧹 Limpieza previa
+                    if (mensaje) {
+                        mensaje.textContent = "";
+                        mensaje.style.color = "";
+                    }
+                    fila.style.backgroundColor = "";
+
+                    if (!fi || !ff) return;
+
+                    btnDigital.disabled = true;
+
+                    // ⚠️ Validar rango
+                    if (ff < fi) {
+                        if (mensaje) {
+                            mensaje.textContent = "⚠️ La fecha fin no puede ser menor que la fecha inicio";
+                            mensaje.style.color = "orange";
+                        }
+                        fila.style.backgroundColor = "#fff6e6";
+                        btnDigital.disabled = true;
+                        return;
+                    }
+
+                    // ✅ Llamar API
+                    try {
+                        const resp = await fetch(
+                            `/api/verificar_disponibilidad_digital/?ubicacion_id=${ubicacionId}&slot_id=${slotId}&fecha_inicio=${fi}&fecha_fin=${ff}`
+                        );
+                        const data = await resp.json();
+
+                        if (mensaje) mensaje.textContent = data.mensaje;
+                        if (data.ok) {
+                            if (mensaje) mensaje.style.color = "green";
+                            fila.style.backgroundColor = "#e6ffe6";
+                            btnDigital.disabled = false;
+                        } else {
+                            if (mensaje) mensaje.style.color = "red";
+                            fila.style.backgroundColor = "#ffe6e6";
+                            btnDigital.disabled = true;
+                        }
+                    } catch (error) {
+                        console.error("❌ Error en fetch digital:", error);
+                        if (mensaje) {
+                            mensaje.textContent = "Error al verificar disponibilidad";
+                            mensaje.style.color = "red";
+                        }
+                        fila.style.backgroundColor = "#fff0f0";
+                    }
+                };
+
+                // 🔄 Listeners
+                fechaInicio.addEventListener("change", validar);
+                fechaFin.addEventListener("change", validar);
+            }
+
+            // 🧱 Aplicar a las filas existentes al cargar
+            document.querySelectorAll(".fila-slot").forEach(agregarValidacionFila);
+
+            // ➕ Detectar cuando se agregan filas nuevas dinámicamente
+            const observer = new MutationObserver((mutationsList) => {
+                for (const mutation of mutationsList) {
+                    if (mutation.addedNodes.length > 0) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.classList && node.classList.contains("fila-slot")) {
+                                console.log("🆕 Nueva fila detectada → validación añadida");
+                                agregarValidacionFila(node);
+                            }
+                        });
+                    }
+                }
+            });
+
+            // 👁️ Observar el contenedor donde se agregan filas (ajusta el selector si es necesario)
+            const contenedorFilas = document.getElementById("tabla-slots-digitales") || document.body;
+            observer.observe(contenedorFilas, { childList: true, subtree: true });
+        });
+    </script>
+
+    <!--FILTRAR SI ES DIGITAL CANJE-->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const tipoVentaSelect = document.getElementById("tipo_venta");
+            const filasSlots = document.querySelectorAll(".fila-slot");
+
+            tipoVentaSelect.addEventListener("change", () => {
+                const tipoSeleccionado = tipoVentaSelect.value;
+
+                filasSlots.forEach(fila => {
+                    const esCanje = fila.dataset.esCanje === "true";
+
+                    if (!tipoSeleccionado) {
+                        // Si no se seleccionó ningún tipo, mostrar todo
+                        fila.style.display = "";
+                    } else if (tipoSeleccionado === "2") {
+                        // Tipo venta 2 → mostrar solo slots de canje
+                        fila.style.display = esCanje ? "" : "none";
+                    } else {
+                        // Otros tipos → mostrar solo los que NO son de canje
+                        fila.style.display = !esCanje ? "" : "none";
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!--CALCULAR LA TARIFA MES DE ESTATICAS-->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Escuchar cambios en todas las filas de ubicaciones
+            document.querySelectorAll("tr.fila-ubicacion").forEach(fila => {
+                const inputTarifa = fila.querySelector('input[name="tarifa_mes"]');
+                const inputInicio = fila.querySelector('.fecha-inicio');
+                const inputFin = fila.querySelector('.fecha-fin');
+
+                // Función para calcular el monto proporcional
+                const calcularMonto = () => {
+                    const tarifa = parseFloat(inputTarifa.value) || 0;
+                    const inicio = new Date(inputInicio.value);
+                    const fin = new Date(inputFin.value);
+
+                    // Solo calcula si ambas fechas son válidas
+                    if (!isNaN(inicio) && !isNaN(fin) && tarifa > 0) {
+                        // Diferencia en milisegundos → días
+                        const diferenciaDias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+
+                        if (diferenciaDias > 0) {
+                            const tarifaDia = (tarifa / 30).toFixed(2);
+                            const montoTotal = (tarifaDia * diferenciaDias).toFixed(2);
+
+                            // Mostrar el resultado en la fila (puedes decidir dónde)
+                            let msg = fila.nextElementSibling?.querySelector('.msg-tarifa');
+                            if (msg) {
+                                msg.textContent = `💰 ${diferenciaDias} días → Diario: S/ ${tarifaDia} → Total: S/ ${montoTotal}`;
+                            }
+                        } else {
+                            let msg = fila.nextElementSibling?.querySelector('.msg-tarifa');
+                            if (msg) msg.textContent = "⚠️ La fecha final debe ser posterior a la inicial";
+                        }
+                    }
+                };
+
+                // Escuchar cambios en los tres campos
+                [inputTarifa, inputInicio, inputFin].forEach(input => {
+                    input.addEventListener("input", calcularMonto);
+                });
+            });
+        });
+    </script>
+
+    <!--CALCULAR LA TARIFA MES DIGITAL-->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("💰 Calculadora de tarifas digitales activa");
+
+            // Función reutilizable para aplicar el cálculo a una fila (original o agregada)
+            function aplicarCalculoTarifa(fila) {
+                const inputTarifa = fila.querySelector('.tarifa-mes');
+                const inputInicio = fila.querySelector('.fecha-inicio');
+                const inputFin = fila.querySelector('.fecha-fin');
+                const msg = fila.querySelector('.msg-disponibilidad-digital');
+
+                if (!inputTarifa || !inputInicio || !inputFin) return;
+
+                const calcularMonto = () => {
+                    const tarifa = parseFloat(inputTarifa.value) || 0;
+                    const inicio = new Date(inputInicio.value);
+                    const fin = new Date(inputFin.value);
+
+                    // Limpiar mensaje antes
+                    if (msg) msg.textContent = "";
+
+                    if (!isNaN(inicio) && !isNaN(fin) && tarifa > 0) {
+                        const diferenciaDias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+
+                        if (diferenciaDias > 0) {
+                            const tarifaDia = (tarifa / 30).toFixed(2);
+                            const montoTotal = (tarifaDia * diferenciaDias).toFixed(2);
+
+                            if (msg) {
+                                msg.textContent = `💰 ${diferenciaDias} días → Diario: S/ ${tarifaDia} → Total: S/ ${montoTotal}`;
+                                msg.style.color = "blue";
+                            }
+                        } else {
+                            if (msg) {
+                                msg.textContent = "⚠️ La fecha final debe ser posterior a la inicial";
+                                msg.style.color = "orange";
+                            }
+                        }
+                    }
+                };
+
+                // Escuchar cambios
+                [inputTarifa, inputInicio, inputFin].forEach(input => {
+                    input.addEventListener("input", calcularMonto);
+                    input.addEventListener("change", calcularMonto);
+                });
+            }
+
+            // Aplicar a todas las filas existentes inicialmente
+            document.querySelectorAll(".fila-slot").forEach(aplicarCalculoTarifa);
+
+            // Si agregas filas nuevas (desde agregarRango), les aplicamos también el cálculo automático
+            const observer = new MutationObserver((mutationsList) => {
+                for (const mutation of mutationsList) {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.classList && node.classList.contains("fila-slot")) {
+                            aplicarCalculoTarifa(node);
+                            console.log("🆕 Nueva fila digital con cálculo de tarifa habilitado");
+                        }
+                    });
+                }
+            });
+
+            // Observamos todo el modal de ubicaciones digitales
+            const modal = document.getElementById("modal-ubicaciones-digitales");
+            if (modal) observer.observe(modal, { childList: true, subtree: true });
+        });
+    </script>
+    <script>
+        setTimeout(function () {
+            var messages = document.getElementsByClassName('alert');
+            for (var i = 0; i < messages.length; i++) {
+                messages[i].style.display = 'none';
+            }
+        }, 3000);  // 5000 milisegundos = 5 segundos
+    </script>
+    {% if nota_json %}
+<script>
+    window.NOTA_INICIAL = JSON.parse('{{ nota_json|escapejs }}');
+</script>
+</script>
+{% else %}
+<script>
+    window.NOTA_INICIAL = null;
+</script>
+{% endif %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    if (!window.NOTA_INICIAL) return;
+
+    const n = window.NOTA_INICIAL;
+
+    // ===================================
+    // CAMPOS PRINCIPALES
+    // ===================================
+
+    document.getElementById("tipo_venta").value = n.tipo_venta_id || "";
+    document.getElementById("tipo_pago").value = n.tipo_pago_id || "";
+    document.getElementById("dias").value = n.dias_credito_id || "";
+
+    // CLIENTE ID (hidden)
+    document.getElementById("proveedor_id").value = n.cliente_id || "";
+
+    // CLIENTE NOMBRE
+    document.getElementById("proveedor_nombre").value = n.cliente_nombre || "";
+
+    // MARCA
+    document.getElementById("anunciante").value = n.anunciante || "";
+
+    // ===================================
+    // RAZÓN SOCIAL (select)
+    // ===================================
+
+    document.getElementById("razon_social").value = n.razon_social_id || "";
+
+    // ===================================
+    // FACTURACIÓN
+    // ===================================
+
+    const ruc = document.getElementById("ruc");
+    if (ruc) ruc.value = n.ruc || "";
+
+    const correo = document.getElementById("correo_admin");
+    if (correo) correo.value = n.correo || "";   // <<--- Ajustado a tu input
+
+    const telefono = document.getElementById("telefono");
+    if (telefono) telefono.value = n.telefono || "";
+
+    const direccion = document.getElementById("direccion");
+    if (direccion) direccion.value = n.direccion || "";
+
+    const detalle = document.getElementById("detalle_facturacion");
+    if (detalle) detalle.value = n.detalle_facturacion || "";
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const n = window.NOTA_INICIAL;
+    if (!n) return;
+
+    console.log("🟦 RAZON SOCIAL ID:", n.razon_social_id);
+
+    const select = document.getElementById("razon_social");
+
+    console.log("🟨 Options disponibles:");
+    [...select.options].forEach(o => console.log("value=", o.value));
+
+    select.value = n.razon_social_id;
+
+    console.log("🟩 Resultado final select.value =", select.value);
+});
+</script>
+</body>
+{% endblock %}
+
+</html>

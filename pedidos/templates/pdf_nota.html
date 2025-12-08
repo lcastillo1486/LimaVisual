@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      margin: 0;
+      padding: 0;
+      color: #000;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 5px 0;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 16px;
+      color: #003366;
+    }
+
+    h2 {
+      background-color: #ca051f;
+      padding: 4px;
+      color: #ffffff;
+      border: 1px solid #b10303;
+    }
+
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 4px;
+      text-align: left;
+      word-wrap: break-word;
+    }
+
+    th {
+      background-color: #ca051f;
+      color: #f3f3f3;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #003366;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+    }
+
+    .header img {
+      height: 60px;
+    }
+
+    .header-info {
+      text-align: right;
+      font-size: 9px;
+      color: #003366;
+    }
+
+    .section {
+      margin-bottom: 15px;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 9px;
+      border-top: 1px solid #003366;
+      padding-top: 3px;
+    }
+
+    .highlight {
+      font-weight: bold;
+      color: #003366;
+    }
+
+    .section_text td {
+      font-size: 6pt;
+      /* Tamaño legible para PDF */
+      line-height: 1.5;
+      /* Espaciado agradable */
+      text-align: justify;
+      /* Alineado elegante */
+      padding: 6px 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 🔹 Encabezado -->
+  <div class="header">
+    <div>
+      {% if logo_url %}
+      <img src="data:image/png;base64,{{ logo_url }}" width="120">
+      {% endif %}
+    </div>
+    {% if nota.estado_id == 2 or nota.estado_id == 4 or nota.estado_id == 7   %}
+    <div style="font-size: 50px; font-weight: bold; color: rgb(231, 141, 141);">
+      {{nota.estado}}
+    </div>
+    {% endif %}
+    <div class="header-info">
+      <b>{{ empresa_nombre }}</b><br>
+      {{ empresa_direccion }}<br>
+      Tel: {{ empresa_telefono }}<br>
+      RUC: {{ empresa_ruc }}
+    </div>
+  </div>
+
+  <h1>NOTA DE PEDIDO</h1>
+
+  <!-- 🔹 Datos principales -->
+  <div class="section">
+    <table>
+      <tr>
+        <td><b>N° Nota:</b> {{ nota.numero_np }}</td>
+        <td><b>Fecha:</b> {{ nota.fecha|date:"d/m/Y" }}</td>
+      </tr>
+      <tr>
+        <td><b>Anunciante:</b> {{ nota.cliente.nombre_comercial }}</td>
+        <td><b>RUC:</b> {{ nota.cliente.ruc }}</td>
+        <td><b>Marca:</b> {{ nota.anunciante }}</td>
+      </tr>
+      <tr>
+        <td colspan="3"><b>Dirección:</b> {{ nota.direccion }}</td>
+        <!-- <td><b>Correo Administrativo:</b> {{ correo_admin | default:'' }}</td> -->
+      </tr>
+      <tr>
+        <td><b>Contacto:</b> {{ nota.contacto | default:'' }} </td>
+        <td><b>Teléfono:</b> {{ nota.telefono | default:'' }}</td>
+        <td><b>Correo Contacto:</b> {{ correo_contacto | default:'' }}</td>
+      </tr>
+      <tr>
+        <td><b>Tipo de Venta:</b> {{ nota.tipo_venta.descripcion }}</td>
+        <td><b>Forma de Pago:</b> {{ nota.tipo_pago.descripcion }}</td>
+        <td><b>Días de Crédito:</b> {{ nota.dias_credito.dias }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 🔹 Detalle de Ubicaciones Fijas -->
+  <div class="section">
+    <h2>UBICACIONES FIJAS</h2>
+    {% if detalles_fijas %}
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Dirección</th>
+          <th>Desde</th>
+          <th>Hasta</th>
+          <th>Días</th>
+          <th>Tar. Mes</th>
+          <th>Tar. Día</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in detalles_fijas %}
+        <tr>
+          <td style="text-align:center;">{{ d.ubicacion.codigo }}</td>
+          <td>{{ d.ubicacion.direccion }}</td>
+          <td style="text-align:center;">{{ d.fecha_inicio|date:"d/m/Y" }}</td>
+          <td style="text-align:center;">{{ d.fecha_fin|date:"d/m/Y" }}</td>
+          <td style="text-align:center;">{{ d.dias }}</td>
+          <td style="text-align:center;">{{ d.tarifa_mes }}</td>
+          <td style="text-align:center;">{{ d.tarifa_dia }}</td>
+          <td style="text-align:center;">{{ d.total_tarifa_ubi }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="7" style="text-align:right; font-weight:bold;">TOTAL ESTÁTICAS :</td>
+          <td style="text-align:center; font-weight:bold;">
+            {{ total_tarifa_estaticas }}
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+    {% else %}
+    <p>No hay ubicaciones fijas asociadas a esta nota.</p>
+    {% endif %}
+  </div>
+
+  <!-- 🔹 Detalle de Ubicaciones Digitales -->
+  <div class="section">
+    <h2>UBICACIONES DIGITALES</h2>
+    {% if reservas_digitales %}
+    <table>
+      <thead>
+        <tr>
+          <th>Ubicación</th>
+          <th>Dirección</th>
+          <th>Slot</th>
+          <th>Desde</th>
+          <th>Hasta</th>
+          <th>Días</th>
+          <th>Tar. Mes</th>
+          <th>Tar. Día</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reservas_digitales %}
+        <tr>
+          <td style="text-align:center;">{{ r.slot.ubicacion.codigo }}</td>
+          <td>{{ r.slot.ubicacion.direccion }}</td>
+          <td style="text-align:center;">{{ r.slot.numero_slot }}</td>
+          <td style="text-align:center;">{{ r.fecha_inicio|date:"d/m/Y" }}</td>
+          <td style="text-align:center;">{{ r.fecha_fin|date:"d/m/Y" }}</td>
+          <td style="text-align:center;">{{ r.dias }}</td>
+          <td style="text-align:center;">{{ r.tarifa_mes }}</td>
+          <td style="text-align:center;">{{ r.tarifa_dia }}</td>
+          <td style="text-align:center;">{{ r.total_tarifa_digital }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="8" style="text-align:right; font-weight:bold;">TOTAL DIGITALES :</td>
+          <td style="text-align:center; font-weight:bold;">
+            {{ total_tarifa_digital }}
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+    {% else %}
+    <p>No hay ubicaciones digitales asociadas a esta nota.</p>
+    {% endif %}
+  </div>
+
+  {% if nota.detalle_ubicaciones %}
+  <div class="section">
+    <table>
+      <tr>
+        <td colspan="3"><b>Observaciones:</b> {{ nota.detalle_ubicaciones | default:'' }}</td>
+      </tr>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- 🔹 Totales -->
+  <div class="section" style="text-align: center;">
+    <table>
+      <tr style="text-align: center;">
+    <td ><b>SUBTOTAL :</b> S/ {{ subtotal }} </td>
+    <td><b>IGV:</b> S/ {{ nota.igv }}  </td>
+    <td><b>TOTAL:</b> <span class="highlight">S/ {{ nota.total }}</span></td>
+    </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <table>
+      <tr>
+        <td><b>Razón Social:</b> <br>
+          {{ nota.razon_social | default:'' }}  </td>
+        <td ><b>RUC:</b>  <br>
+          {{ nota.razon_social.ruc | default:'' }}</td>
+        <td ><b>Correo:</b> <br>
+           {{ correo_admin }}</td>
+        <td ><b>Teléfono:</b> <br>
+          {{ nota.razon_social.telefono | default:'' }}</td>
+        <td ><b>Dirección:</b> {{ nota.razon_social.direccion | default:'' }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section section_text">
+    <table>
+      <tr>
+        <td>
+          <span> - UNA VEZ ACEPTADO, EL CLIENTE SÓLO PODRÁ DEJAR SIN EFECTO ESTE ACUERDO CON UN AVISO PREVIO DE 72 HORAS Y
+            ASUMIENDO UNA PENALIDAD EQUIVALENTE AL 50% DEL MONTO PACTADO + IGV.<br></span>
+          <span> - SI LA PAUTA FUERA SUSPENDIDA ANTES DE TERMINAR EL PLAZO CONTRATADO, EL CLIENTE DEBE ASUMIR EL GASTO DE
+            LA PAUTA UTILIZADA MÁS EL 70% DEL MONTO PENDIENTE DE USO.<br></span>
+          <span> - ESTE DOCUMENTO TIENE LA VALIDEZ DE UN CONVENIO/CONTRATO; LA ACEPTACIÓN DEL MISMO IMPLICA EL CUMPLIMIENTO
+            DE LAS CONDICIONES INDICADAS.<br></span>
+          <span> - EL CLIENTE DEBE FIRMAR EL PRESENTE DOCUMENTO Y ENVIAR ESCANEADO EN SEÑAL DE CONFORMIDAD.<br></span>
+          <span> - PARA CAMBIO DE PAUTA PUBLICITARIA EL CLIENTE DEBERÁ COMUNICARLO POR ESCRITO CON 72 HORAS DE
+            ANTICIPACIÓN.<br></span>
+          <span> - LA PRIORIDAD DE RENOVACIÓN SE OTORGARÁ A LAS NP IGUALES O MAYORES DE 3 MESES.<br></span>
+          <span> - SI EL CLIENTE NO FORMALIZA SU INTERÉS DE RENOVACIÓN CON 15 DÍAS DE ANTICIPACIÓN A LA FECHA DE
+            VENCIMIENTO, LIMA LED SAC QUEDARÁ EN LIBERTAD DE OFRECER LOS ESPACIOS PUBLICITARIOS A OTRAS
+            EMPRESAS.<br></span>
+          <span> - LIMA VISUAL ENVIARÁ LOS REPORTES FOTOGRÁFICOS DENTRO DE LAS 48 HORAS DE SUBIDA DE NUEVOS ARTES Y/O
+            CAMBIOS.<br></span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 🔹 Firmas -->
+  <div class="section">
+    <table>
+      <tr>
+        <td style="height:60px; text-align:center;">_________________________<br>Ejecutivo: {{ usuario.get_full_name }}
+        </td>
+        <td style="height:60px; text-align:center;">_________________________<br>Cliente</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 🔹 Footer -->
+  <div class="footer">
+    Emitido el {{ now|date:"d/m/Y H:i" }} — Página
+    <pdf:pagenumber /> de
+    <pdf:pagecount />
+  </div>
+
+</body>
+
+</html>
