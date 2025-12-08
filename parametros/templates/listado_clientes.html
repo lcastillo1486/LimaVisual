@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetros - Formularios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+
+    <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+
+        <div class="mb-4 p-4 bg-blue-50 border border-black rounded-xl shadow-sm flex items-center justify-center h-10"
+            style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Listado de Clientes</h2>
+        </div>
+
+        <!-- 🔹 Buscador -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="relative w-full md:w-1/3">
+                <input type="text" id="buscadorClientes" placeholder="🔍 Buscar cliente..."
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 px-4 py-2 text-sm" />
+            </div>
+            <a href="{% url 'crear_cliente' %}"
+                class="ml-4 inline-flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-lg shadow hover:bg-gray-600 focus:ring-2 focus:ring-gray-400 transition">
+                ➕ Nuevo Cliente
+            </a>
+        </div>
+
+        <!-- 🔹 Tabla -->
+        <div
+            class="overflow-x-auto rounded-lg border border-gray-300 shadow-inner max-h-96 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+            <table id="tablaClientes" class="min-w-full text-sm text-gray-800">
+                <thead class="bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white">
+                    <tr>
+                        <th class="py-3 px-4 text-left font-semibold">Razón Social</th>
+                        <th class="py-3 px-4 text-left font-semibold">Nombre Comercial</th>
+                        <th class="py-3 px-4 text-left font-semibold">RUC</th>
+                        <th class="py-3 px-4 text-left font-semibold">Teléfono</th>
+                        <th class="py-3 px-4 text-left font-semibold">Correo</th>
+                        <th class="py-3 px-4 text-left font-semibold">Contacto</th>
+                        <th class="py-3 px-4 text-left font-semibold">Dirección</th>
+                        <th class="py-3 px-4 text-left font-semibold">Ejecutivo</th>
+                        <th class="py-3 px-4 text-center font-semibold">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for cliente in listado_clientes %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                        <td class="py-2 px-4">{{ cliente.razon_social }}</td>
+                        <td class="py-2 px-4">{{ cliente.nombre_comercial }}</td>
+                        <td class="py-2 px-4 font-mono text-gray-700">{{ cliente.ruc }}</td>
+                        <td class="py-2 px-4">{{ cliente.telefono }}</td>
+                        <td class="py-2 px-4">{{ cliente.correo }}</td>
+                        <td class="py-2 px-4">{{ cliente.contacto }}</td>
+                        <td class="py-2 px-4">{{ cliente.direccion }}</td>
+                        <td class="py-2 px-4">
+                            {% if cliente.usuario %}
+                            {{ cliente.usuario.first_name }} {{ cliente.usuario.last_name }}
+                            {% else %}
+                            <span class="text-gray-400 italic">Sin asignar</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <a href="{% url 'editar_cliente' cliente.id %}"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-700 text-white hover:bg-gray-600 focus:ring-2 focus:ring-gray-400 transition">
+                                ✏️ <span>Editar</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="py-4 text-center text-gray-500 italic">No hay clientes registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("buscadorClientes").addEventListener("keyup", function () {
+            const valor = this.value.toLowerCase();
+            const filas = document.querySelectorAll("#tablaClientes tbody tr");
+
+            filas.forEach(fila => {
+                const texto = fila.textContent.toLowerCase();
+                fila.style.display = texto.includes(valor) ? "" : "none";
+            });
+        });
+    </script>
+
+    </div>
+
+</body>
+{% endblock %}
+
+</html>

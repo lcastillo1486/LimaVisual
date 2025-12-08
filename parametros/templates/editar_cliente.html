@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetros - Formularios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+
+    <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+
+        <div class="mb-4 p-4 bg-blue-50 border border-black rounded-xl shadow-sm flex items-center justify-center h-10"
+            style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Definir Clientes</h2>
+        </div>
+
+        {% if messages %}
+        <div class="space-y-2 mb-4">
+            {% for message in messages %}
+            {% if message.tags == 'success' %}
+            <div class="flex items-center p-3 rounded-lg bg-green-100 border border-green-300 text-green-800 shadow-sm">
+                <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 10-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="font-medium">{{ message }}</span>
+            </div>
+            {% elif message.tags == 'error' %}
+            <div class="flex items-center p-3 rounded-lg bg-red-100 border border-red-300 text-red-800 shadow-sm">
+                <svg class="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M8.257 3.099c.366-.756 1.42-.756 1.786 0l6.518 13.468A1 1 0 0115.682 18H4.318a1 1 0 01-.879-1.433L9.957 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="font-medium">{{ message }}</span>
+            </div>
+            {% else %}
+            <div class="p-3 rounded-lg bg-gray-100 border border-gray-300 text-gray-800 shadow-sm">
+                {{ message }}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form action="{% url 'editar_cliente' cliente.id %}" method="POST"
+            class="space-y-6 bg-gray-50 border border-gray-300 rounded-xl shadow-sm p-6">
+            {% csrf_token %}
+
+            <div class="border-b border-gray-300 pb-3 mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Editar Cliente</h2>
+                <p class="text-sm text-gray-600">Actualice los datos necesarios y guarde los cambios.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex flex-col">
+                    <label for="razon_social" class="text-sm font-medium text-gray-700">Razón Social:</label>
+                    <input type="text" id="razon_social" name="razon_social" value="{{ cliente.razon_social }}" required
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="nombre_comercial" class="text-sm font-medium text-gray-700">Nombre Comercial:</label>
+                    <input type="text" id="nombre_comercial" name="nombre_comercial"
+                        value="{{ cliente.nombre_comercial }}"
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="ruc" class="text-sm font-medium text-gray-700">RUC:</label>
+                    <input type="text" id="ruc" name="ruc" maxlength="20" value="{{ cliente.ruc }}" required
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                    <p id="ruc-warning" class="text-sm text-red-600 hidden"></p>
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="telefono" class="text-sm font-medium text-gray-700">Teléfono:</label>
+                    <input type="text" id="telefono" name="telefono" maxlength="9" value="{{ cliente.telefono }}"
+                        required
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="correo" class="text-sm font-medium text-gray-700">Correo Administrativo:</label>
+                    <input type="email" id="correo" name="correo" value="{{ cliente.correo }}"
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="correo_contacto" class="text-sm font-medium text-gray-700">Correo Contacto:</label>
+                    <input type="email" id="correo_contacto" name="correo_contacto" value="{{ cliente.correo_contacto |default:'' }}"
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="contacto" class="text-sm font-medium text-gray-700">Contacto:</label>
+                    <input type="text" id="contacto" name="contacto" value="{{ cliente.contacto }}"
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <div class="md:col-span-2 flex flex-col">
+                    <label for="direccion" class="text-sm font-medium text-gray-700">Dirección:</label>
+                    <textarea id="direccion" name="direccion" rows="2"
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 resize-none">{{ cliente.direccion }}</textarea>
+                </div>
+
+                <div class="flex flex-col md:w-1/2">
+                    <label for="usuario" class="text-sm font-medium text-gray-700">Ejecutivo:</label>
+                    <select id="usuario" name="usuario"
+                        class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
+                        <option value="">-- Selecciona un usuario --</option>
+                        {% for user in usuarios %}
+                        <option value="{{ user.id }}" {% if cliente.usuario and cliente.usuario.id == user.id %}selected{%endif %}>
+                            {{ user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-300">
+                <a href="{% url 'listar_cliente' %}"
+                    class="px-4 py-2 rounded-lg border border-gray-400 text-gray-700 hover:bg-gray-100">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 shadow-sm">
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const inputRuc = document.getElementById('ruc');
+            const aviso = document.getElementById('ruc-warning');
+            const clienteId = "{{ cliente.id }}";  // ⚡ se pasa desde el template
+
+            inputRuc.addEventListener('blur', async function () {
+                const ruc = this.value.trim();
+                if (!ruc) {
+                    aviso.classList.add('hidden');
+                    return;
+                }
+
+                const url = `/verificar_ruc/?ruc=${encodeURIComponent(ruc)}&cliente_id=${clienteId}`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.exists) {
+                        aviso.textContent = "⚠️ Este RUC ya está registrado en otro cliente.";
+                        aviso.classList.remove('hidden');
+                        aviso.classList.add('text-red-600');
+                        setTimeout(() => {
+                            aviso.classList.add('hidden');
+                            aviso.textContent = "";
+                        }, 3000);
+                    } else {
+                        aviso.textContent = "";
+                        aviso.classList.add('hidden');
+                    }
+                } catch (error) {
+                    console.error("Error al verificar el RUC:", error);
+                }
+            });
+        });
+    </script>
+</body>
+{% endblock %}
+
+</html>

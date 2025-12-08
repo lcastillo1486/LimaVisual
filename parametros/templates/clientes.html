@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetros - Formularios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+
+    <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+
+        <div class="mb-4 p-4 bg-blue-50 border border-black rounded-xl shadow-sm flex items-center justify-center h-10"
+            style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Definir Clientes</h2>
+        </div>
+
+        {% if messages %}
+        <div class="space-y-2 mb-4">
+            {% for message in messages %}
+            {% if message.tags == 'success' %}
+            <div class="flex items-center p-3 rounded-lg bg-green-100 border border-green-300 text-green-800 shadow-sm">
+                <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 10-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="font-medium">{{ message }}</span>
+            </div>
+            {% elif message.tags == 'error' %}
+            <div class="flex items-center p-3 rounded-lg bg-red-100 border border-red-300 text-red-800 shadow-sm">
+                <svg class="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M8.257 3.099c.366-.756 1.42-.756 1.786 0l6.518 13.468A1 1 0 0115.682 18H4.318a1 1 0 01-.879-1.433L9.957 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="font-medium">{{ message }}</span>
+            </div>
+            {% else %}
+            <div class="p-3 rounded-lg bg-gray-100 border border-gray-300 text-gray-800 shadow-sm">
+                {{ message }}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form action="{% url 'crear_cliente' %}" method="POST"
+            class="space-y-6 bg-gray-50 border border-gray-300 rounded-xl shadow-sm p-6">
+            {% csrf_token %}
+
+            <!-- 🧾 Título -->
+            <div class="border-b border-gray-300 pb-3 mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Registro de Cliente</h2>
+                <p class="text-sm text-gray-600">Complete los datos del cliente para guardarlos en el sistema.</p>
+            </div>
+
+            <!-- 🧍 Información principal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Razon Social -->
+                <div class="flex flex-col">
+                    <label for="razon_social" class="text-sm font-medium text-gray-700">Razón Social:</label>
+                    <input type="text" id="razon_social" name="razon_social" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <!-- Nombre Comercial -->
+                <div class="flex flex-col">
+                    <label for="nombre_comercial" class="text-sm font-medium text-gray-700">Nombre Comercial:</label>
+                    <input type="text" id="nombre_comercial" name="nombre_comercial" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <!-- RUC -->
+                <div class="flex flex-col">
+                    <label for="ruc" class="text-sm font-medium text-gray-700">RUC:</label>
+                    <input type="text" id="ruc" name="ruc" required maxlength="20"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                    <p id="ruc-warning" class="text-sm text-red-600 hidden"></p>
+                </div>
+
+                <!-- Correo -->
+                <div class="flex flex-col">
+                    <label for="correo" class="text-sm font-medium text-gray-700">Correo Administrativo:</label>
+                    <input type="email" id="correo" name="correo" placeholder="cliente@empresa.com" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <!-- Contacto -->
+                <div class="flex flex-col">
+                    <label for="contacto" class="text-sm font-medium text-gray-700">Contacto:</label>
+                    <input type="text" id="contacto" name="contacto" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="correo_contacto" class="text-sm font-medium text-gray-700">Correo Contacto:</label>
+                    <input type="email" id="correo_contacto" name="correo_contacto" placeholder="cliente@empresa.com" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                
+                <!-- Teléfono -->
+                <div class="flex flex-col">
+                    <label for="telefono" class="text-sm font-medium text-gray-700">Teléfono (9 dígitos):</label>
+                    <input type="text" id="telefono" name="telefono" maxlength="9" pattern="\d{9}" required
+                        placeholder="987654321"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500" />
+                </div>
+
+                <!-- Dirección -->
+                <div class="md:col-span-2 flex flex-col">
+                    <label for="direccion" class="text-sm font-medium text-gray-700">Dirección:</label>
+                    <textarea id="direccion" name="direccion" rows="3" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 resize-none"></textarea>
+                </div>
+            </div>
+
+            <!-- 👤 Usuario asociado -->
+            <div class="flex flex-col md:w-1/2">
+                <label for="usuario" class="text-sm font-medium text-gray-700">Ejecutivo de cuenta:</label>
+                <select id="usuario" name="usuario"
+                    class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
+                    <option value="">-- Selecciona un ejecutivo --</option>
+                    {% for ejecutivo in listado_ejecutivos %}
+                    <option value="{{ user.id }}">{{ ejecutivo.first_name }} {{ ejecutivo.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- 🧠 Botones -->
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-300">
+                <button type="reset"
+                    class="px-4 py-2 rounded-lg border border-gray-400 text-gray-700 hover:bg-gray-100">
+                    Limpiar
+                </button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 shadow-sm">
+                    Guardar Cliente
+                </button>
+            </div>
+        </form>
+
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const rucInput = document.getElementById('ruc');
+            const razonSocialInput = document.getElementById('razon_social');
+            const nombreComercialInput = document.getElementById('nombre_comercial');
+            const direccionInput = document.getElementById('direccion');
+            const rucWarning = document.getElementById('ruc-warning');
+
+            rucInput.addEventListener('blur', async function () {
+                const ruc = rucInput.value.trim();
+
+                if (!ruc) {
+                    rucWarning.classList.add('hidden');
+                    return;
+                }
+
+                // 🔹 Validación 1: Verificar si el RUC ya existe
+                try {
+                    const resp = await fetch(`/verificar_ruc/?ruc=${encodeURIComponent(ruc)}`);
+                    const data = await resp.json();
+
+                    if (data.exists) {
+                        rucWarning.textContent = "⚠️ Este RUC ya está registrado.";
+                        rucWarning.classList.remove('hidden');
+                        rucWarning.classList.add('text-red-600');
+
+                        // Limpiar campos
+                        razonSocialInput.value = "";
+                        nombreComercialInput.value = "";
+                        direccionInput.value = "";
+
+                        // 💨 Ocultar aviso después de 3 segundos
+                        setTimeout(() => {
+                            rucWarning.classList.add('hidden');
+                            rucWarning.textContent = "";
+                        }, 3000);
+
+                        return; // ❌ Detener ejecución si RUC ya existe
+                    } else {
+                        rucWarning.classList.add('hidden');
+                        rucWarning.textContent = "";
+                    }
+                } catch (error) {
+                    console.error("Error al verificar el RUC:", error);
+                    return;
+                }
+
+                // 🔹 Validación 2: Consultar APISPeru solo si no existe en BD
+                if (ruc.length !== 11 || isNaN(ruc)) {
+                    rucWarning.textContent = "El RUC debe tener 11 dígitos numéricos.";
+                    rucWarning.classList.remove('hidden');
+                    return;
+                } else {
+                    rucWarning.classList.add('hidden');
+                }
+
+                const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6Imx1aXMuY2FzdGlsbG9AZ3J1cG92aWF0ZWsuY29tIn0.LaQVw2dBDAB0mBZTIH4Bif4MsL0bdMJd0AGL0j2IP98";
+                const url = `https://dniruc.apisperu.com/api/v1/ruc/${ruc}?token=${token}`;
+
+                try {
+                    const respApi = await fetch(url);
+                    const dataApi = await respApi.json();
+
+                    if (dataApi && !dataApi.error) {
+                        razonSocialInput.value = dataApi.razonSocial || "";
+                        nombreComercialInput.value = dataApi.nombreComercial || dataApi.razonSocial || "";
+                        direccionInput.value = dataApi.direccion || "";
+                    } else {
+                        rucWarning.textContent = "No se encontraron datos para este RUC.";
+                        rucWarning.classList.remove('hidden');
+                        razonSocialInput.value = "";
+                        nombreComercialInput.value = "";
+                        direccionInput.value = "";
+                    }
+                } catch (err) {
+                    console.error("Error al consultar RUC:", err);
+                    rucWarning.textContent = "Error al consultar el RUC. Intenta nuevamente.";
+                    rucWarning.classList.remove('hidden');
+                    razonSocialInput.value = "";
+                    nombreComercialInput.value = "";
+                    direccionInput.value = "";
+                }
+            });
+        });
+    </script>
+</body>
+{% endblock %}
+
+</html>
