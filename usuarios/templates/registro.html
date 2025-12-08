@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+  {% load static %}
+<head>
+  <meta charset="UTF-8">
+  <title>Registro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center" style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+  <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+    
+    <!-- Logo -->
+    <div class="flex justify-center mb-6">
+      <!-- <img src="{% static 'logo.png' %}" alt="Logo" class="h-16"> -->
+    </div>
+
+    <!-- Título -->
+    <h1 class="text-2xl font-bold text-gray-800 text-center">Crear cuenta</h1>
+    <p class="text-sm text-gray-500 text-center mt-1">Complete el formulario para registrar.</p>
+
+    {% if messages %}
+      <div class="mt-4">
+        {% for message in messages %}
+          <div class="p-3 rounded-xl text-sm 
+                      {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
+                      {% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+                      {% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Formulario -->
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+
+      <!-- Usuario -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Usuario</label>
+        {{ registro_form.username }}
+        {% for error in registro_form.username.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Correo electrónico</label>
+        {{ registro_form.email }}
+        {% for error in registro_form.email.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <!-- Nombre -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Nombre</label>
+        {{ registro_form.first_name }}
+        {% for error in registro_form.first_name.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <!-- Apellido -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Apellido</label>
+        {{ registro_form.last_name }}
+        {% for error in registro_form.last_name.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <!-- Contraseña -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+        {{ registro_form.password1 }}
+        {% for error in registro_form.password1.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+        {% endfor %}
+        {% if registro_form.password1.help_text %}
+          <p class="text-xs text-gray-500 mt-1">{{ registro_form.password1.help_text|safe }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Confirmar contraseña -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Confirmar contraseña</label>
+        {{ registro_form.password2 }}
+        {% for error in registro_form.password2.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <!-- Botón -->
+      <button type="submit"
+        class="w-full text-white py-2 px-4 rounded-xl hover:bg-blue-700 transition font-medium" style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+        Registrarme
+      </button>
+    </form>
+
+    <div class="mt-6 text-center">
+      <a href="{% url 'inicial' %}" class="text-sm text-blue-600 hover:text-blue-800 underline">Volver al login</a>
+    </div>
+  </div>
+</body>
+</html>

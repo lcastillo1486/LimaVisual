@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lima Visual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Controla la aparición del menú al hacer hover sobre el usuario */
+    .dropdown-panel {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(0.5rem);
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+
+    .group:hover>.dropdown-panel,
+    .group:focus-within>.dropdown-panel {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+  <nav class="shadow-md w-full" style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+
+        <!-- Logo -->
+        <a href="/home/" class="flex items-center">
+          <img src="{% static 'logo.png' %}" alt="Logo" class="h-10 w-auto" />
+        </a>
+
+        <!-- Usuario con mega menú -->
+        <div class="relative group text-white font-medium hidden md:block">
+          <button class="flex items-center gap- 2 focus:outline-none">
+            Bienvenido, {{ user.first_name }} {{ user.last_name }}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- MEGA MENÚ -->
+          <div
+            class="dropdown-panel absolute right-0 mt-2 w-[600px] bg-white rounded-lg shadow-lg ring-1 ring-black/10 p-6 z-50 grid grid-cols-3 gap-6 justify-center text-gray-800">
+            <!-- Columna 1: Nueva -->
+             {% if request.user.is_superuser %}
+            <div>
+              <h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Nota de Pedido</h3>
+              <ul class="space-y-1">
+                <li><a href="/crear/pedido/" class="block hover:text-blue-600">Crear Nota de Pedido</a></li>
+                <!-- <li><a href="/entradas/buscar-editar/" class="block hover:text-blue-600">Modificar Nota de Pedido</a> -->
+                </li>
+                <li><a href="/mis-pedidos/" class="block hover:text-blue-600">Mis Nota de Pedido</a>
+                </li>
+                <li><a href="/calendario/fijas/" class="block hover:text-blue-600">Calendario Fijas</a>
+                </li>
+                <li><a href="/calendario/digitales/" class="block hover:text-blue-600">Calendario Digital</a>
+                </li>
+                <li><a href="/aprobar-negar-np/" class="block hover:text-blue-600">Notas por Autorizar</a>
+                </li>
+                <!-- <li><a href="/dashboard/" class="block hover:text-blue-600">Dashboard</a> -->
+                <!-- </li> -->
+              </ul>
+            </div>
+
+            <!-- Columna 3: Definir -->
+            <div>
+              <h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Definir</h3>
+              <ul class="space-y-1">
+                <li><a href="/crear-cliente/" class="block hover:text-blue-600">Clientes</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/listar-cliente/" class="block hover:text-blue-600">Editar Cliente</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear-parametros/" class="block hover:text-blue-600">Parámetros</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear/ubicacion/" class="block hover:text-blue-600">Ubicaciones</a></li>
+              </ul>
+              
+            </div>
+
+            <!-- Columna 4: Usuarios -->
+            <div>
+              <h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Usuarios</h3>
+              <ul class="space-y-1">
+                {% if user.is_superuser %}
+                <li><a href="/registro/" class="block hover:text-blue-600">Crear nuevo usuario</a></li>
+                {% endif %}
+                <!-- <li><a href="/usuarios/listado/" class="block hover:text-blue-600">Listado de usuarios</a></li> -->
+                <li><a href="{% url 'password_change' %}" class="block hover:text-blue-600">Cambiar contraseña</a></li>
+                <li><a href="/logout/" class="block hover:text-blue-600">Cerrar sesión</a></li>
+              </ul>
+            </div>
+
+            {% else %}
+
+            <div>
+              <h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Nota de Pedido</h3>
+              <ul class="space-y-1">
+                <li><a href="/crear/pedido/" class="block hover:text-blue-600">Crear Nota de Pedido</a></li>
+                <!-- <li><a href="/entradas/buscar-editar/" class="block hover:text-blue-600">Modificar Nota de Pedido</a> -->
+                </li>
+                <li><a href="/mis-pedidos/" class="block hover:text-blue-600">Mis Nota de Pedido</a>
+                </li>
+                <li><a href="/calendario/fijas/" class="block hover:text-blue-600">Calendario Fijas</a>
+                </li>
+                <li><a href="/calendario/digitales/" class="block hover:text-blue-600">Calendario Digital</a>
+                </li>
+                <!-- <li><a href="/aprobar-negar-np/" class="block hover:text-blue-600">Notas por Autorizar</a>
+                </li> -->
+                <!-- <li><a href="/dashboard/" class="block hover:text-blue-600">Dashboard</a> -->
+                </li>
+              </ul>
+            </div>
+
+            <!-- Columna 3: Definir -->
+            <div>
+              <h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Definir</h3>
+              <!-- <ul class="space-y-1">
+                <li><a href="/crear-cliente/" class="block hover:text-blue-600">Clientes</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/listar-cliente/" class="block hover:text-blue-600">Editar Cliente</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear-parametros/" class="block hover:text-blue-600">Parámetros</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear/ubicacion/" class="block hover:text-blue-600">Ubicaciones</a></li>
+              </ul> -->
+              
+            </div>
+
+            <!-- Columna 4: Usuarios -->
+            <div>
+              <h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Usuarios</h3>
+              <ul class="space-y-1">
+                {% if user.is_superuser %}
+                <li><a href="/registro/" class="block hover:text-blue-600">Crear nuevo usuario</a></li>
+                {% endif %}
+                <!-- <li><a href="/usuarios/listado/" class="block hover:text-blue-600">Listado de usuarios</a></li> -->
+                <li><a href="{% url 'password_change' %}" class="block hover:text-blue-600">Cambiar contraseña</a></li>
+                <li><a href="/logout/" class="block hover:text-blue-600">Cerrar sesión</a></li>
+              </ul>
+            </div>
+
+
+
+            {% endif %}
+
+          </div>
+        </div>
+
+        <!-- Botón móvil -->
+        <div class="md:hidden">
+          <button id="menu-btn" class="text-white text-2xl">☰</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Menú móvil -->
+    <div id="mobile-menu" class="hidden md:hidden bg-gray-800 text-white p-4 space-y-3">
+      <details>
+        {% if request.user.is_superuser %}
+        <summary class="font-semibold cursor-pointer">Nota de Pedido</summary>
+        <ul class="pl-4">
+          <li><a href="/crear/pedido/" class="block hover:text-blue-600">Crear Nota de Pedido</a></li>
+                <!-- <li><a href="/entradas/buscar-editar/" class="block hover:text-blue-600">Modificar Nota de Pedido</a> -->
+                </li>
+                <li><a href="/mis-pedidos/" class="block hover:text-blue-600">Mis Nota de Pedido</a>
+                </li>
+                <li><a href="/calendario/fijas/" class="block hover:text-blue-600">Calendario Fijas</a>
+                </li>
+                <li><a href="/calendario/digitales/" class="block hover:text-blue-600">Calendario Digital</a>
+                </li>
+                <li><a href="/aprobar-negar-np/" class="block hover:text-blue-600">Notas por Autorizar</a>
+                </li>
+        </ul>
+      </details>
+      <details>
+        <summary class="font-semibold cursor-pointer">Definir</summary>
+        <ul class="pl-4">
+          <ul class="space-y-1">
+                <li><a href="/crear-cliente/" class="block hover:text-blue-600">Clientes</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/listar-cliente/" class="block hover:text-blue-600">Editar Cliente</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear-parametros/" class="block hover:text-blue-600">Parámetros</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear/ubicacion/" class="block hover:text-blue-600">Ubicaciones</a></li>
+              </ul>
+      </details>
+      <details>
+        <summary class="font-semibold cursor-pointer">Usuarios</summary>
+        <ul class="pl-4">
+          {% if user.is_superuser %}
+                <li><a href="/registro/" class="block hover:text-blue-600">Crear nuevo usuario</a></li>
+                {% endif %}
+                <!-- <li><a href="/usuarios/listado/" class="block hover:text-blue-600">Listado de usuarios</a></li> -->
+                <li><a href="{% url 'password_change' %}" class="block hover:text-blue-600">Cambiar contraseña</a></li>
+                <li><a href="/logout/" class="block hover:text-blue-600">Cerrar sesión</a></li>
+        </ul>
+      </details>
+      {% else %}
+      <summary class="font-semibold cursor-pointer">Nota de Pedido</summary>
+        <ul class="pl-4">
+          <li><a href="/crear/pedido/" class="block hover:text-blue-600">Crear Nota de Pedido</a></li>
+                <!-- <li><a href="/entradas/buscar-editar/" class="block hover:text-blue-600">Modificar Nota de Pedido</a> -->
+                </li>
+                <li><a href="/mis-pedidos/" class="block hover:text-blue-600">Mis Nota de Pedido</a>
+                </li>
+                <li><a href="/calendario/fijas/" class="block hover:text-blue-600">Calendario Fijas</a>
+                </li>
+                <li><a href="/calendario/digitales/" class="block hover:text-blue-600">Calendario Digital</a>
+                </li>
+                <!-- <li><a href="/aprobar-negar-np/" class="block hover:text-blue-600">Notas por Autorizar</a>
+                </li> -->
+        </ul>
+      </details>
+      <details>
+        <summary class="font-semibold cursor-pointer">Definir</summary>
+        <ul class="pl-4">
+          <ul class="space-y-1">
+                <!-- <li><a href="/crear-cliente/" class="block hover:text-blue-600">Clientes</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/listar-cliente/" class="block hover:text-blue-600">Editar Cliente</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear-parametros/" class="block hover:text-blue-600">Parámetros</a></li>
+              </ul>
+              <ul class="space-y-1">
+                <li><a href="/crear/ubicacion/" class="block hover:text-blue-600">Ubicaciones</a></li>
+              </ul> -->
+      </details>
+      <details>
+        <summary class="font-semibold cursor-pointer">Usuarios</summary>
+        <ul class="pl-4">
+          {% if user.is_superuser %}
+                <li><a href="/registro/" class="block hover:text-blue-600">Crear nuevo usuario</a></li>
+                {% endif %}
+                <!-- <li><a href="/usuarios/listado/" class="block hover:text-blue-600">Listado de usuarios</a></li> -->
+                <li><a href="{% url 'password_change' %}" class="block hover:text-blue-600">Cambiar contraseña</a></li>
+                <li><a href="/logout/" class="block hover:text-blue-600">Cerrar sesión</a></li>
+        </ul>
+      </details>
+
+
+
+
+
+      {% endif %}
+    </div>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <script>
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+  </script>
+</body>
+
+</html>

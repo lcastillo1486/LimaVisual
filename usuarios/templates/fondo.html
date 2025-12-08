@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<div class="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-white">
+  <img 
+    src="/static/fondo.png" 
+    alt="Fondo centrado" 
+    class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-lg"
+  >
+</div>
+
+{% endblock %}
+
+</html>
