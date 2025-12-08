@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetros - Formularios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+
+    <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+
+        <div class="mb-4 p-4 bg-blue-50 border border-black rounded-xl shadow-sm flex items-center justify-center h-10"
+            style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Definir Ubicaciones</h2>
+        </div>
+
+        <div class="max-w-6xl mx-auto px-4 flex justify-center">
+            <div class="bg-gray-100 shadow-md rounded-2xl p-6 w-full md:w-1/2">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Nueva Ubicación</h2>
+
+                <form method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-3 gap-4">
+                        <!-- Código -->
+                        <div class="col-span-1">
+                            <label for="codigo" class="block text-sm font-medium text-gray-700 mb-1">Código</label>
+                            <input type="text" id="codigo" name="codigo" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                    </div>
+
+                    <!-- Dirección -->
+                    <div class="col-span-2">
+                        <label for="direccion" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                        <input type="text" id="direccion" name="direccion" required
+                            class="w-full px-3 py-6 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="referencia" class="block text-sm font-medium text-gray-700 mb-1">Referencia</label>
+                        <input type="text" id="referencia" name="referencia"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div class="flex flex-col">
+                            <label for="tarifa_fria" class="text-sm font-medium text-gray-700">Tarifa Fria (S/):</label>
+                            <input type="number" id="tarifa_fria" name="tarifa_fria" placeholder="0.00" step="0.01" required
+                            title="Para ubicaciones digitales, ingrese la tarifa del slot por mes"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                    
+                    <div class="flex flex-col">
+                            <label for="tarifa_minima" class="text-sm font-medium text-gray-700">Tarifa minima (S/):</label>
+                            <input type="number" id="tarifa_minima" name="tarifa_minima" placeholder="0.00" step="0.01" required
+                            title="Para ubicaciones digitales, ingrese la tarifa del slot por mes"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+
+                    <div class="w-full md:w-1/2 mb-4">
+                        <label for="tipo_venta" class="block mb-2 text-sm font-semibold text-gray-800 tracking-wide">
+                            Seleccione un tipo de ubicación:
+                        </label>
+
+                        <div class="relative">
+                            <select id="tipo_venta" name="tipo_ubi" required class="block w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-10 text-sm text-gray-700 
+             shadow-sm focus:border-gray-600 focus:ring-2 focus:ring-gray-500 transition-all duration-200">
+                                <option value="" disabled selected>— Seleccione —</option>
+                                {% for opcion in tipo_ubi %}
+                                <option value="{{ opcion.id }}">{{ opcion.nombre }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <!-- flechita decorativa -->
+                            <span
+                                class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                                ▼
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit"
+                            class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE TABLA -->
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">Ubicaciones Registradas</h3>
+
+            <!-- Contenedor con scroll -->
+            <div class="overflow-x-auto overflow-y-auto max-h-40 rounded-lg border border-gray-200 bg-white shadow-sm">
+                <table class="min-w-full text-sm text-left text-gray-700">
+                    <thead class="bg-gray-200 text-white uppercase text-xs font-semibold sticky top-0"
+                        style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-center">Código</th>
+                            <th scope="col" class="px-4 py-3 text-center">Dirección</th>
+                            <th scope="col" class="px-4 py-3 text-center">Referencia</th>
+                            <th scope="col" class="px-4 py-3 text-center">Tarifa Fria</th>
+                            <th scope="col" class="px-4 py-3 text-center">Tarifa Minima</th>
+                            <th scope="col" class="px-4 py-3 text-center">Tipo</th>
+                            <th scope="col" class="px-4 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for ubicacion in listado_ubicaciones %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 text-center">{{ ubicacion.codigo }}</td>
+                            <td class="px-4 py-2 text-center">{{ ubicacion.direccion }}</td>
+                            <td class="px-4 py-2 text-center">{{ ubicacion.referencia | default:'' }}</td>
+                            <td class="px-4 py-2 text-center">{{ ubicacion.tarifa_fria }}</td>
+                            <td class="px-4 py-2 text-center">{{ ubicacion.tarifa_minima }}</td>
+                            <td class="px-6 py-3 text-center font-semibold">
+                                {% if ubicacion.tipo.id == 1 %}
+                                <span class="text-blue-700 bg-blue-100 px-2 py-1 rounded-lg text-xs">
+                                    Fija
+                                </span>
+                                {% elif ubicacion.tipo.id == 2 %}
+                                <span class="text-purple-700 bg-purple-100 px-2 py-1 rounded-lg text-xs">
+                                    Digital
+                                </span>
+                                {% else %}
+                                <span class="text-gray-700 bg-gray-100 px-2 py-1 rounded-lg text-xs">
+                                    {{ ubicacion.tipo.nombre }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                <a href="{% url 'editar_ubicacion' ubicacion.id %}"
+                                    class="text-blue-600 hover:text-blue-800 font-semibold">✏️ Editar</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-4 py-4 text-center text-gray-500">
+                                No hay ubicaciones registradas.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputCodigo = document.getElementById('codigo');
+            const feedback = document.createElement('p');
+            feedback.className = 'mt-1 text-sm';
+            inputCodigo.parentNode.appendChild(feedback);
+
+            inputCodigo.addEventListener('input', async () => {
+                const codigo = inputCodigo.value.trim();
+                feedback.textContent = ''; // limpiar mensajes previos
+
+                if (codigo.length === 0) return; // no hacer nada si está vacío
+
+                try {
+                    const response = await fetch(`/verificar-codigo/?codigo=${encodeURIComponent(codigo)}`);
+                    const data = await response.json();
+
+                    if (data.existe) {
+                        feedback.textContent = '⚠️ Este código ya existe.';
+                        feedback.classList.remove('text-green-600');
+                        feedback.classList.add('text-red-600');
+                        inputCodigo.classList.add('border-red-500', 'focus:ring-red-500');
+                    } else {
+                        feedback.textContent = '✅ Código disponible.';
+                        feedback.classList.remove('text-red-600');
+                        feedback.classList.add('text-green-600');
+                        inputCodigo.classList.remove('border-red-500', 'focus:ring-red-500');
+                        inputCodigo.classList.add('border-green-500', 'focus:ring-green-500');
+                    }
+                } catch (error) {
+                    console.error('Error verificando código:', error);
+                }
+            });
+        });
+    </script>
+</body>
+{% endblock %}
+
+</html>
