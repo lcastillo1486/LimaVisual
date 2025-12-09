@@ -162,18 +162,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 STATIC_URL = '/static/'
 
-if not DEBUG:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-else:
+if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'lima_visual', 'static'),
     ]
-
-
-if not DEBUG:
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
