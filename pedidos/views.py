@@ -385,7 +385,7 @@ def nuevo_pedido(request):
 
             if enviar_correo:
                 asunto = "⚠️ Verificación requerida: Nota de pedido inferior al monto minimo establecido" 
-                link = "www.youtube.com"
+                link = "https://limavisual.onrender.com"
                 mensaje = f"""
 Estimado/a,
 
@@ -394,7 +394,7 @@ Por tal motivo, se requiere su verificación y aprobación o rechazo antes de pr
 
 Detalles del pedido:
 - Número de nota: {numero_nota}
-- solicitante = {request.user.first_name} {request.user.last_name}"
+- Solicitante = {request.user.first_name} {request.user.last_name}"
 
 Por favor, revise la información y realice la acción correspondiente en el sistema ({link}) (Aprobar / Rechazar) a la brevedad posible para no afectar el flujo operativo.
 
@@ -407,7 +407,7 @@ Sistema de Gestión de Pedidos"""
         asunto,
         mensaje,
         settings.EMAIL_HOST_USER,
-        ['aleyluis1486@gmail.com'],
+        ['luis.castillo@grupoviatek.com'],
         fail_silently=False,
     )
             
