@@ -1106,7 +1106,7 @@ def aprobar_nota(request, nota_id):
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
     asunto = "✅ Nota de Pedido aprobada." 
-    link = "www.youtube.com"
+    link = "https://limavisual.onrender.com"
     mensaje = f"""
 
 Estimado/a,
@@ -1148,7 +1148,7 @@ def rechazar_nota(request, nota_id):
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
     asunto = "❌ Nota de Pedido rechazada." 
-    link = "www.youtube.com"
+    link = "https://limavisual.onrender.com"
     mensaje = f"""
 
 Estimado/a,

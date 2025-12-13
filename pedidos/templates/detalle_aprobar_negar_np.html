@@ -19,7 +19,7 @@
         <!-- 🔹 Datos principales -->
         <div class="mb-8 bg-white shadow rounded-lg p-4">
             <table class="w-full text-sm">
-                <b>Ejecutivo:</b> {{ usuario.get_full_name }}
+                <b>Ejecutivo:</b> {{ nota.usuario.first_name }} {{ nota.usuario.last_name }}
                 <tr class="border-b">
                     <td class="py-2"><b>N° Nota:</b> {{ nota.numero_np }}</td>
                     <td><b>Fecha:</b> {{ nota.fecha|date:"d/m/Y" }}</td>
