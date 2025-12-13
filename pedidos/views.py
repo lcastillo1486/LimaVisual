@@ -546,7 +546,7 @@ def obtener_ocupaciones_digitales(request):
         elif r.nota_pedido.tipo_venta_id == 4:
             color = "#e95e0e"  # BONIFICACION
         else:
-            color = "#e9150e" # AGENCIA
+            color = "#e9150e" # AGENCIA 
 
         events.append({
             "id": r.id,
@@ -561,7 +561,7 @@ def obtener_ocupaciones_digitales(request):
                 "estado": r.estado.descripcion,
                 "nota": r.nota_pedido_id
             }
-        })
+        }) 
 
     return JsonResponse(events, safe=False)
 
@@ -583,7 +583,10 @@ def generar_pdf_nota(request, nota_id):
     nombre_cliente_pdf = nota.cliente.nombre_comercial
     correo_admin_pdf = nota.razon_social.correo
     correo_contac_pdf = nota.cliente.correo_contacto
-    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except locale.Error:
+        locale.setlocale(locale.LC_TIME, '')
     now = datetime.now()
     mes_letra = now.strftime("%B")
 
