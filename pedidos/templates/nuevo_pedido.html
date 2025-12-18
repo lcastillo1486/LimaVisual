@@ -1459,7 +1459,7 @@
 
                     // Validar que ambas fechas estén presentes
                     if (!fi || !ff) return;
-                    document.getElementById("boton-fijas").disabled = true;
+                    document.getElementById("boton-fijas").disabled = false;
 
                     // ⚠️ Validar que la fecha fin no sea menor que la fecha inicio
                     if (ff < fi) {
@@ -1536,7 +1536,7 @@
 
                     if (!fi || !ff) return;
 
-                    btnDigital.disabled = true;
+                    btnDigital.disabled = false;
 
                     // ⚠️ Validar rango
                     if (ff < fi) {
@@ -1545,7 +1545,7 @@
                             mensaje.style.color = "orange";
                         }
                         fila.style.backgroundColor = "#fff6e6";
-                        btnDigital.disabled = true;
+                        btnDigital.disabled = false;
                         return;
                     }
 
@@ -1564,7 +1564,7 @@
                         } else {
                             if (mensaje) mensaje.style.color = "red";
                             fila.style.backgroundColor = "#ffe6e6";
-                            btnDigital.disabled = true;
+                            btnDigital.disabled = false;
                         }
                     } catch (error) {
                         console.error("❌ Error en fetch digital:", error);
