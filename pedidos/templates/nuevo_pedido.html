@@ -800,7 +800,7 @@
                 <td class="px-4 py-2 border-t text-gray-700 text-center whitespace-nowrap w-32">${u.fechaFin || '-'}</td>
                 <td class="px-4 py-2 border-t text-gray-700 text-center">${u.diasDif || '-'}</td>
                 <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaMes?.toFixed?.(2) || '0.00'}</td>
-                <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaPorDia?.toFixed?.(2) || '0.00'}</td>
+                <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaPorDia}</td>
                 <td class="px-4 py-2 border-t font-semibold text-right text-green-700">${u.montoTotal || '0.00'}</td>
             `;
                     tbody.appendChild(row);
@@ -1149,7 +1149,7 @@
 
                     // 💰 Calcular monto total (opcional)
                     const tarifa = parseFloat(rango.tarifa).toFixed(2) || 0;
-                    const tarifaDiaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
+                    const tarifaDiaria = tarifa > 0 ? (tarifa / 30) : "0.00";
                     const montoTotal = tarifa > 0 && dias > 0 ? (tarifaDiaria * dias).toFixed(2) : "0.00";
 
 
@@ -1192,7 +1192,7 @@
                     }
 
                     const tarifa = parseFloat(r.tarifa) || 0;
-                    const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
+                    const tarifa_diaria = tarifa > 0 ? (tarifa / 30) : "0.00";
                     const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
 
                     diario = tarifa_diaria;
@@ -1307,7 +1307,7 @@
                         }
 
                         const tarifa = parseFloat(r.tarifa) || 0;
-                        const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
+                        const tarifa_diaria = tarifa > 0 ? (tarifa / 30) : "0.00";
                         const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
 
                         listaOcupaciones.push({
