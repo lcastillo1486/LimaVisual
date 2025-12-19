@@ -1039,7 +1039,7 @@
 
         /* ---------- checkbox: seleccionar/desmarcar slot ---------- */
         function actualizarSeleccionDigital(checkbox) {
-            const idSlot = checkbox.dataset.slot;
+            const idSlot = checkbox.value;
             const row = checkbox.closest('tr');
             const ubicacionId = checkbox.dataset.ubicacion || row.dataset.ubicacion || '';
             const codigo = checkbox.dataset.codigo || (row.querySelector('td:nth-child(2)')?.innerText?.trim()) || '';
