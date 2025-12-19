@@ -67,7 +67,7 @@ class DetalleUbicacion(models.Model):
     fecha_fin = models.DateField(null=True, blank=True)
     dias = models.PositiveIntegerField(default=0)
     tarifa_mes = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tarifa_dia = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tarifa_dia = models.DecimalField(max_digits=25, decimal_places=15, default=0)
     total_tarifa_ubi = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     estado = models.ForeignKey('ubicaciones.EstadoFijasDigital', on_delete=models.PROTECT, related_name='estado_ubi_fija', default=2)
 

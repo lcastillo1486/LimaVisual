@@ -55,7 +55,7 @@ class ReservaSlot(models.Model):
     dias = models.PositiveIntegerField(default=0)
     estado = models.ForeignKey(EstadoFijasDigital, on_delete=models.PROTECT, related_name='estado_ubi_slot')
     tarifa_mes = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tarifa_dia = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tarifa_dia = models.DecimalField(max_digits=25, decimal_places=15, default=0)
     total_tarifa_slot = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
