@@ -113,3 +113,8 @@ def buscar_empresa(request):
         ).values('id', 'nombre_comercial', 'ruc')[:15]
 
     return JsonResponse(list(proveedores), safe=False)
+
+def listar_clientes_usuarios(request):
+    listado_clientes = clientes.objects.all().order_by('nombre_comercial')
+    return render(request, 'listado_clientes_usuarios.html',{'listado_clientes':listado_clientes})
+
