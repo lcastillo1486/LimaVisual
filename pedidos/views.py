@@ -706,6 +706,10 @@ def verificar_disponibilidad_digital(request):
     # 🔍 Buscar reservas que se superpongan en ese slot de esa ubicación
 
     qs = SlotDigital.objects.filter(ubicacion_id = ubicacion_id, numero_slot = slot_id).first()
+    print("DEBUG SlotDigital ----------------")
+    print("ubicacion_id:", ubicacion_id)
+    print("slot_id:", slot_id)
+    print("qs:", qs)
     if qs.es_canje == False:
         conflicto = ReservaSlot.objects.filter(
             slot__ubicacion_id=ubicacion_id,
