@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import nuevo_pedido, obtener_ocupaciones_fijas, calendario_ocupaciones_fijas, obtener_ocupaciones_digitales, calendario_ocupaciones_digitales, generar_pdf_nota, verificar_disponibilidad, verificar_disponibilidad_digital, gestion_notas, generar_pdf_nota, cambiar_estado_nota, filtrar_notas, ver_dashboard, dashboard_data, dashboard, aprobar_negar_np, filtrar_notas_n_autoriza, detalle_aprobar_negar_np, aprobar_nota, rechazar_nota
+from .views import nuevo_pedido, obtener_ocupaciones_fijas, calendario_ocupaciones_fijas, obtener_ocupaciones_digitales, calendario_ocupaciones_digitales, generar_pdf_nota, verificar_disponibilidad, verificar_disponibilidad_digital, gestion_notas, generar_pdf_nota, cambiar_estado_nota, filtrar_notas, ver_dashboard, dashboard_data, dashboard, aprobar_negar_np, filtrar_notas_n_autoriza, detalle_aprobar_negar_np, aprobar_nota, rechazar_nota, calendario_ocupaciones_digitales_canje
 
 urlpatterns = [
     path('crear/pedido/',nuevo_pedido, name='crear_pedido'),
@@ -7,6 +7,7 @@ urlpatterns = [
     path('calendario/fijas/', calendario_ocupaciones_fijas, name='calendario_fijas'),
     path('api/ocupaciones-digitales/', obtener_ocupaciones_digitales, name='api_ocupaciones_digitales'),
     path('calendario/digitales/', calendario_ocupaciones_digitales, name='calendario_digitales'),
+    path('calendario/canjes/', calendario_ocupaciones_digitales_canje, name='calendario_canjes'),
     path('nota/pdf/<int:nota_id>/', generar_pdf_nota, name='generar_pdf_nota'),
     path('api/verificar_disponibilidad/', verificar_disponibilidad, name='verificar_disponibilidad'),
     path('api/verificar_disponibilidad_digital/', verificar_disponibilidad_digital, name='verificar_disponibilidad_digital'),

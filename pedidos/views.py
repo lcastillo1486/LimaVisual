@@ -570,6 +570,16 @@ def calendario_ocupaciones_digitales(request):
     slots = SlotDigital.objects.select_related('ubicacion').all().order_by('ubicacion', 'numero_slot')
     return render(request, 'calendario_digitales.html', {'slots': slots,'ubicaciones': ubicaciones})
 
+def calendario_ocupaciones_digitales_canje(request):
+    ubicaciones = ubicacion.objects.filter(tipo = 2).order_by('codigo')
+    slots = (
+    SlotDigital.objects
+    .select_related('ubicacion')
+    .filter(es_canje=True)
+    .order_by('ubicacion', 'numero_slot')
+)
+    return render(request, 'calendario_canjes.html', {'slots': slots,'ubicaciones': ubicaciones})
+
 
 def generar_pdf_nota(request, nota_id):
     # traer el objeto nota y detalles (ajusta imports según tus modelos)
