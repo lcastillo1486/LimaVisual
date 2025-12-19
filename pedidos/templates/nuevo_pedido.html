@@ -555,7 +555,7 @@
                                     </thead>
                                     <tbody>
                                         {% for slot in slots %}
-                                        <tr data-slot-id="{{ slot.id }}" data-ubicacion-id="{{ slot.ubicacion.id }}"
+                                        <tr data-slot-id="{{ slot.id }}" data-slot-numero="{{ slot.numero_slot }}" data-ubicacion-id="{{ slot.ubicacion.id }}"
                                             data-tipo-venta="{{ slot.tipo_venta.id }}"
                                             data-es-canje="{{ slot.es_canje|yesno:'true,false' }}"
                                             class="{% cycle 'bg-white' 'bg-gray-50' %} hover:bg-gray-100 transition fila-slot">
@@ -1513,6 +1513,7 @@
 
             function agregarValidacionFila(fila) {
                 const slotId = fila.dataset.slotId;
+                const numeroSlot = fila.dataset.slotNumero;
                 const ubicacionId = fila.dataset.ubicacionId;
                 const fechaInicio = fila.querySelector(".fecha-inicio");
                 const fechaFin = fila.querySelector(".fecha-fin");
@@ -1552,7 +1553,7 @@
                     // ✅ Llamar API
                     try {
                         const resp = await fetch(
-                            `/api/verificar_disponibilidad_digital/?ubicacion_id=${ubicacionId}&slot_id=${slotId}&fecha_inicio=${fi}&fecha_fin=${ff}`
+                            `/api/verificar_disponibilidad_digital/?ubicacion_id=${ubicacionId}&slot_id=${numeroSlot}&fecha_inicio=${fi}&fecha_fin=${ff}`
                         );
                         const data = await resp.json();
 
