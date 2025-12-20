@@ -50,6 +50,7 @@ class NotaPedido(models.Model):
     )
     estado = models.ForeignKey(EstadoNota, on_delete=models.SET_NULL, null=True, blank=True, default=1)
     rel_edicion = models.IntegerField(null=True, blank=True)
+    facturar = models.BooleanField(default=False)
 
 class DetalleUbicacion(models.Model):
     nota = models.ForeignKey(

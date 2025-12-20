@@ -171,6 +171,7 @@ def nuevo_pedido(request):
         direccion = request.POST.get("direccion")
         detalle_ubicaciones = request.POST.get("detalle_ubicaciones")
         detalle_facturacion = request.POST.get("detalle_facturacion")
+        facturado = request.POST.get("facturado")
 
         # 📦 Procesar ubicaciones FIJAS
         ubicaciones = request.POST.getlist('ubicaciones_seleccionadas') or []
@@ -252,7 +253,8 @@ def nuevo_pedido(request):
                     detalle_ubicaciones=detalle_ubicaciones,
                     detalle_facturacion=detalle_facturacion,
                     estado_id = estado_nota,
-                    usuario=request.user
+                    usuario=request.user,
+                    facturar = facturado
                 )
 
             else:
@@ -276,7 +278,8 @@ def nuevo_pedido(request):
                     direccion=direccion,
                     detalle_ubicaciones=detalle_ubicaciones,
                     detalle_facturacion=detalle_facturacion,
-                    usuario=request.user
+                    usuario=request.user,
+                    facturar = facturado
                 )
 
             # 3️⃣ Procesar ubicaciones FIJAS (solo si hay)
