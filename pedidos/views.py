@@ -221,9 +221,10 @@ def nuevo_pedido(request):
             if ocupaciones:
                 for i in ocupaciones:
                     slot_id = int(i.get('slot_id'))
+                    slot_name = int(i.get('slot'))
                     ubi_id_s = int(i.get('ubicacion_id'))
                     tarifa_mes = i.get('tarifa_mes')
-                    t_minima = SlotDigital.objects.get(ubicacion_id = ubi_id_s, numero_slot = slot_id ).tarifa_minima 
+                    t_minima = SlotDigital.objects.get(ubicacion_id = ubi_id_s, numero_slot = slot_name ).tarifa_minima 
                     
                     if Decimal(tarifa_mes) < t_minima:
                         requiere_aprobacion = 1
