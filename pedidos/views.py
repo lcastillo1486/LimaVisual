@@ -411,7 +411,7 @@ Sistema de Gestión de Pedidos"""
         asunto,
         mensaje,
         settings.EMAIL_HOST_USER,
-        ['luis.castillo@grupoviatek.com'],
+        ['administracion@limavisual.pe','a.perales@limavisual.pe'],
         fail_silently=False,
     )
             
