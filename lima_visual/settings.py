@@ -52,12 +52,12 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.it-uneed.com'
+EMAIL_HOST = 'mail.backtrackelite.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = 'l.castillo@it-uneed.com'
-EMAIL_HOST_PASSWORD = 'lcastban1486522020'  
+EMAIL_HOST_USER = 'notificaciones@backtrackelite.com'
+EMAIL_HOST_PASSWORD = 'Lima.2025'  
 
 
 # Application definition
