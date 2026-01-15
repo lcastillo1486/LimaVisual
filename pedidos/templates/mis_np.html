@@ -131,6 +131,7 @@
                                 <th class="px-4 py-2 font-semibold uppercase tracking-wider text-center">Anunciante</th>
                                 <th class="px-4 py-2 font-semibold uppercase tracking-wider text-center">Marca</th>
                                 <th class="px-4 py-2 font-semibold uppercase tracking-wider text-center">Estado</th>
+                                <th class="px-4 py-2 font-semibold uppercase tracking-wider text-center">Usuario</th>
                                 <th class="px-4 py-2 font-semibold uppercase tracking-wider text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -165,6 +166,9 @@
                                         {{item.estado }}
                                     </span>
                                     {% endif %}
+                                </td>
+                                <td class="px-3 py-1 text-center space-x-1">
+                                    {{item.usuario}}
                                 </td>
                                 <td class="px-3 py-1 text-center space-x-1">
                                     <!-- Ver Detalle -->
@@ -381,6 +385,8 @@
                                 ${item.estado__descripcion}
                             </span>
                         </td>
+                        <td class="px-3 py-1 text-center space-x-1">
+                            ${item.usuario__username}</td>
                         <td class="px-3 py-1 text-center space-x-1">
 
     <!-- Ver Detalle -->

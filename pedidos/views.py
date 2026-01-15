@@ -770,9 +770,15 @@ def verificar_disponibilidad_digital(request):
 
 def gestion_notas(request):
     usuario=request.user
-    listado_notas = NotaPedido.objects.filter(usuario_id = usuario)
-    listado_estado = EstadoNota.objects.all().order_by('descripcion')
-    return render(request, "mis_np.html", {'listado_notas':listado_notas, 'listado_estado':listado_estado})
+    if usuario.is_superuser:
+        listado_notas = NotaPedido.objects.all()
+        listado_estado = EstadoNota.objects.all().order_by('descripcion')
+        return render(request, "mis_np.html", {'listado_notas':listado_notas, 'listado_estado':listado_estado})
+    else:
+        usuario=request.user
+        listado_notas = NotaPedido.objects.filter(usuario_id = usuario)
+        listado_estado = EstadoNota.objects.all().order_by('descripcion')
+        return render(request, "mis_np.html", {'listado_notas':listado_notas, 'listado_estado':listado_estado})
 
 def cambiar_estado_nota(request):
     if request.method == "POST":
@@ -822,7 +828,7 @@ def filtrar_notas(request):
     if estado:
         notas = notas.filter(estado_id=estado)
 
-    data = list(notas.values('id', 'numero_np', 'fecha', 'cliente__nombre_comercial', 'anunciante', 'estado__descripcion', 'estado'))
+    data = list(notas.values('id', 'numero_np', 'fecha', 'cliente__nombre_comercial', 'anunciante', 'estado__descripcion', 'estado', 'usuario__username'))
     return JsonResponse(data, safe=False)
 
 def filtrar_notas_n_autoriza(request):
