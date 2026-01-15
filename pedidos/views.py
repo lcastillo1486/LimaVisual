@@ -813,7 +813,10 @@ def filtrar_notas(request):
     estado = request.GET.get('estado', '')
     usuario=request.user
 
-    notas = NotaPedido.objects.filter(usuario_id = usuario)
+    if usuario.is_superuser:
+        notas = NotaPedido.objects.filter(usuario_id = usuario)
+    else:
+        notas = NotaPedido.objects.filter(usuario_id = usuario)
 
     if numero:
         notas = notas.filter(numero_np__icontains=numero)
