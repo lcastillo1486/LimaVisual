@@ -814,7 +814,7 @@ def filtrar_notas(request):
     usuario=request.user
 
     if usuario.is_superuser:
-        notas = NotaPedido.objects.filter(usuario_id = usuario)
+        notas = NotaPedido.objects.all()
     else:
         notas = NotaPedido.objects.filter(usuario_id = usuario)
 
