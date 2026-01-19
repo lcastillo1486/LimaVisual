@@ -98,15 +98,19 @@ def nuevo_pedido(request):
     abrir_pdf = request.GET.get('abrir_pdf')
     editar_id = request.GET.get('editar_id')  # <<--- NUEVO
     id_agente = request.user.id
+    usuario = request.user 
     fecha = date.today()
 
     listado_tipo_venta = TipoVenta.objects.all()
     listado_tipo_pago = TipoFormaPago.objects.all()
     listado_dias = DiasCredito.objects.all()
     listado_ubicaciones = ubicacion.objects.filter(tipo_id=1).order_by('codigo')
-    listado_clientes = clientes.objects.filter(
-        Q(usuario_id=id_agente) | Q(usuario_id__isnull=True)
-    ).order_by('nombre_comercial')
+    if usuario.is_superuser:
+        listado_clientes = clientes.objects.all().order_by('nombre_comercial')
+    else:
+        listado_clientes = clientes.objects.filter(
+            Q(usuario_id=id_agente) | Q(usuario_id__isnull=True)
+        ).order_by('nombre_comercial')
 
     ubicaciones_digitales = (
         ubicacion.objects.filter(tipo_id=2).prefetch_related("slots")

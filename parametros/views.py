@@ -105,12 +105,21 @@ def editar_cliente(request, cliente_id):
 
 def buscar_empresa(request):
     usuario = request.user.id
+    user = request.user
     termino = request.GET.get('q', '')
-    proveedores = clientes.objects.filter(
+    if user.is_superuser:
+
+        proveedores = clientes.objects.filter(
         Q(razon_social__icontains=termino)|
         Q(nombre_comercial__icontains=termino) |
-        Q(ruc__icontains=termino), usuario_id = usuario
+        Q(ruc__icontains=termino)
         ).values('id', 'nombre_comercial', 'ruc')[:15]
+    else:
+        proveedores = clientes.objects.filter(
+            Q(razon_social__icontains=termino)|
+            Q(nombre_comercial__icontains=termino) |
+            Q(ruc__icontains=termino), usuario_id = usuario
+            ).values('id', 'nombre_comercial', 'ruc')[:15]
 
     return JsonResponse(list(proveedores), safe=False)
 
