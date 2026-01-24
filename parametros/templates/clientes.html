@@ -129,7 +129,7 @@
                     class="rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
                     <option value="">-- Selecciona un ejecutivo --</option>
                     {% for ejecutivo in listado_ejecutivos %}
-                    <option value="{{ user.id }}">{{ ejecutivo.first_name }} {{ ejecutivo.last_name }}</option>
+                    <option value="{{ ejecutivo.id }}">{{ ejecutivo.first_name }} {{ ejecutivo.last_name }}</option>
                     {% endfor %}
                 </select>
             </div>
