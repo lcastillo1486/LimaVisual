@@ -70,7 +70,7 @@
         </script>
         {% endif %}
 
-        
+
         <div class="mb-4 p-4 bg-blue-50 border border-black rounded-xl shadow-sm flex items-center justify-center h-10"
             style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
             <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Registrar Nota de Pedido</h2>
@@ -344,17 +344,9 @@
 
                 <!-- 🧾 Bloque principal: Datos de Facturación (3/4 del espacio) -->
                 <div class="md:basis-3/4 mb-6 p-4 bg-gray-50 border border-gray-300 rounded-xl shadow-sm">
-                    <div class="mb-3 pb-2 border-b border-gray-300 flex items-center justify-between">
-                        <h2 class="text-xl font-semibold text-gray-900">
-                            Datos de Facturación
-                        </h2>
+                    <div class="mb-3 pb-2 border-b border-gray-300">
+                        <h2 class="text-xl font-semibold text-gray-900">Datos de Facturación</h2>
 
-                        <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                            <input type="hidden" name="facturado" value="0">
-                            <input type="checkbox" name="facturado" value="1"
-                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <span>Facturado</span>
-                        </label>
                     </div>
 
                     <div>
@@ -390,7 +382,8 @@
                         </div> -->
 
                         <div>
-                            <label for="correo_admin" class="font-medium text-gray-800 whitespace-nowrap">Correo:</label>
+                            <label for="correo_admin"
+                                class="font-medium text-gray-800 whitespace-nowrap">Correo:</label>
                             <input type="text" id="correo_admin" name="correo_admin"
                                 class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-gray-500"
                                 readonly>
@@ -483,7 +476,7 @@
                                         <td class="px-4 py-2 text-gray-700">{{ ubicacion.tarifa_fria }}</td>
                                         <td class="px-2 py-2 text-center">
                                             <input type="number" id="tarifa_mes" name="tarifa_mes" placeholder="0.00"
-                                                step="0.01" 
+                                                step="0.01"
                                                 class="rounded-lg border border-black shadow-sm bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right" />
                                         </td>
                                         <!-- <td class="px-2 py-2 text-center">
@@ -508,7 +501,8 @@
 
                     <!-- Botones de acción -->
                     <div class="flex justify-end space-x-2 mt-4">
-                        <button type="button" onclick="document.getElementById('modal-ubicaciones').classList.add('hidden')"
+                        <button type="button"
+                            onclick="document.getElementById('modal-ubicaciones').classList.add('hidden')"
                             class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
                             Cancelar
                         </button>
@@ -563,7 +557,8 @@
                                     </thead>
                                     <tbody>
                                         {% for slot in slots %}
-                                        <tr data-slot-id="{{ slot.id }}" data-slot-numero="{{ slot.numero_slot }}" data-ubicacion-id="{{ slot.ubicacion.id }}"
+                                        <tr data-slot-id="{{ slot.id }}" data-slot-numero="{{ slot.numero_slot }}"
+                                            data-ubicacion-id="{{ slot.ubicacion.id }}"
                                             data-tipo-venta="{{ slot.tipo_venta.id }}"
                                             data-es-canje="{{ slot.es_canje|yesno:'true,false' }}"
                                             class="{% cycle 'bg-white' 'bg-gray-50' %} hover:bg-gray-100 transition fila-slot">
@@ -625,7 +620,8 @@
 
             <!-- Botones -->
             <div class="flex justify-end mt-4 space-x-2">
-                <button type="button"  onclick="document.getElementById('modal-ubicaciones-digitales').classList.add('hidden')"
+                <button type="button"
+                    onclick="document.getElementById('modal-ubicaciones-digitales').classList.add('hidden')"
                     class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Cancelar</button>
                 <button type="button" onclick="guardarSeleccionUbicacionesDigitales()" id="btn-digital"
                     class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">Guardar
@@ -671,8 +667,7 @@
     </div>
 
     <div class="mt-10 text-center">
-        <button type="submit" 
-            onclick="return confirm('¿Estás seguro de que deseas generar la nota de pedido?');"
+        <button type="submit"
             class="bg-gray-600 hover:bg-gray-700 text-white font-semibold text-sm py-2 px-8 rounded-xl shadow-lg transition duration-300 ease-in-out">
             Guardar Nota de Pedido
         </button>
@@ -808,7 +803,7 @@
                 <td class="px-4 py-2 border-t text-gray-700 text-center whitespace-nowrap w-32">${u.fechaFin || '-'}</td>
                 <td class="px-4 py-2 border-t text-gray-700 text-center">${u.diasDif || '-'}</td>
                 <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaMes?.toFixed?.(2) || '0.00'}</td>
-                <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaPorDia}</td>
+                <td class="px-4 py-2 border-t text-gray-700 text-right">${u.tarifaPorDia?.toFixed?.(2) || '0.00'}</td>
                 <td class="px-4 py-2 border-t font-semibold text-right text-green-700">${u.montoTotal || '0.00'}</td>
             `;
                     tbody.appendChild(row);
@@ -1078,12 +1073,15 @@
             if (!container) return;
 
             // Obtener el ID de ubicación desde el dataset del contenedor o de alguna fila superior
+            const row = container.closest('tr'); // Obtener la fila padre
             const ubicacionId = container.closest('[data-ubicacion-id]')?.dataset.ubicacionId || '';
+            const slotNumero = row?.dataset.slotNumero || ''; // Obtener el numero de slot
 
             const div = document.createElement('div');
             div.className = 'flex items-center gap-2 fila-slot';
             div.dataset.slotId = slotId;           // 🔹 Agregamos dataset para la validación
             div.dataset.ubicacionId = ubicacionId; // 🔹 También el de ubicación
+            div.dataset.slotNumero = slotNumero;   // 🔹 Agregamos numero de slot para validación
 
             div.innerHTML = `
         <input type="date" class="border border-gray-300 rounded-lg px-2 py-1 text-sm fecha-inicio" placeholder="Inicio">
@@ -1130,11 +1128,25 @@
 
             // 2) validar: cada slot seleccionado debe tener al menos un rango
             const faltantes = [];
+            let rangoInvalido = false;
+
             seleccionUbicacionesDigitales.forEach(item => {
                 if (!item.rangos || item.rangos.length === 0) {
                     faltantes.push(`${item.codigo || ('slot ' + item.slot)}`);
                 }
+                // Validar fechas
+                item.rangos.forEach(r => {
+                    if (new Date(r.inicio) > new Date(r.fin)) {
+                        rangoInvalido = true;
+                    }
+                });
             });
+
+            if (rangoInvalido) {
+                alert('⚠️ Se detectaron rangos con fecha de inicio mayor a fecha de fin. Por favor corrígelos.');
+                return;
+            }
+
             if (faltantes.length > 0) {
                 alert('Debes agregar al menos un rango de fechas a: \n' + faltantes.join('\n'));
                 return; // detiene el guardado
@@ -1157,7 +1169,7 @@
 
                     // 💰 Calcular monto total (opcional)
                     const tarifa = parseFloat(rango.tarifa).toFixed(2) || 0;
-                    const tarifaDiaria = tarifa > 0 ? (tarifa / 30) : "0.00";
+                    const tarifaDiaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
                     const montoTotal = tarifa > 0 && dias > 0 ? (tarifaDiaria * dias).toFixed(2) : "0.00";
 
 
@@ -1200,7 +1212,7 @@
                     }
 
                     const tarifa = parseFloat(r.tarifa) || 0;
-                    const tarifa_diaria = tarifa > 0 ? (tarifa / 30) : "0.00";
+                    const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
                     const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
 
                     diario = tarifa_diaria;
@@ -1315,7 +1327,7 @@
                         }
 
                         const tarifa = parseFloat(r.tarifa) || 0;
-                        const tarifa_diaria = tarifa > 0 ? (tarifa / 30) : "0.00";
+                        const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
                         const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
 
                         listaOcupaciones.push({
@@ -1467,7 +1479,7 @@
 
                     // Validar que ambas fechas estén presentes
                     if (!fi || !ff) return;
-                    document.getElementById("boton-fijas").disabled = false;
+                    document.getElementById("boton-fijas").disabled = true;
 
                     // ⚠️ Validar que la fecha fin no sea menor que la fecha inicio
                     if (ff < fi) {
@@ -1545,7 +1557,7 @@
 
                     if (!fi || !ff) return;
 
-                    btnDigital.disabled = false;
+                    btnDigital.disabled = true;
 
                     // ⚠️ Validar rango
                     if (ff < fi) {
@@ -1554,7 +1566,7 @@
                             mensaje.style.color = "orange";
                         }
                         fila.style.backgroundColor = "#fff6e6";
-                        btnDigital.disabled = false;
+                        btnDigital.disabled = true;
                         return;
                     }
 
@@ -1573,7 +1585,7 @@
                         } else {
                             if (mensaje) mensaje.style.color = "red";
                             fila.style.backgroundColor = "#ffe6e6";
-                            btnDigital.disabled = false;
+                            btnDigital.disabled = true;
                         }
                     } catch (error) {
                         console.error("❌ Error en fetch digital:", error);
@@ -1662,7 +1674,7 @@
                         const diferenciaDias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
 
                         if (diferenciaDias > 0) {
-                            const tarifaDia = (tarifa / 30);
+                            const tarifaDia = (tarifa / 30).toFixed(2);
                             const montoTotal = (tarifaDia * diferenciaDias).toFixed(2);
 
                             // Mostrar el resultado en la fila (puedes decidir dónde)
@@ -1712,7 +1724,7 @@
                         const diferenciaDias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
 
                         if (diferenciaDias > 0) {
-                            const tarifaDia = (tarifa / 30);
+                            const tarifaDia = (tarifa / 30).toFixed(2);
                             const montoTotal = (tarifaDia * diferenciaDias).toFixed(2);
 
                             if (msg) {
@@ -1764,82 +1776,82 @@
         }, 3000);  // 5000 milisegundos = 5 segundos
     </script>
     {% if nota_json %}
-<script>
-    window.NOTA_INICIAL = JSON.parse('{{ nota_json|escapejs }}');
-</script>
-</script>
-{% else %}
-<script>
-    window.NOTA_INICIAL = null;
-</script>
-{% endif %}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
+    <script>
+        window.NOTA_INICIAL = JSON.parse('{{ nota_json|escapejs }}');
+    </script>
+    </script>
+    {% else %}
+    <script>
+        window.NOTA_INICIAL = null;
+    </script>
+    {% endif %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
 
-    if (!window.NOTA_INICIAL) return;
+            if (!window.NOTA_INICIAL) return;
 
-    const n = window.NOTA_INICIAL;
+            const n = window.NOTA_INICIAL;
 
-    // ===================================
-    // CAMPOS PRINCIPALES
-    // ===================================
+            // ===================================
+            // CAMPOS PRINCIPALES
+            // ===================================
 
-    document.getElementById("tipo_venta").value = n.tipo_venta_id || "";
-    document.getElementById("tipo_pago").value = n.tipo_pago_id || "";
-    document.getElementById("dias").value = n.dias_credito_id || "";
+            document.getElementById("tipo_venta").value = n.tipo_venta_id || "";
+            document.getElementById("tipo_pago").value = n.tipo_pago_id || "";
+            document.getElementById("dias").value = n.dias_credito_id || "";
 
-    // CLIENTE ID (hidden)
-    document.getElementById("proveedor_id").value = n.cliente_id || "";
+            // CLIENTE ID (hidden)
+            document.getElementById("proveedor_id").value = n.cliente_id || "";
 
-    // CLIENTE NOMBRE
-    document.getElementById("proveedor_nombre").value = n.cliente_nombre || "";
+            // CLIENTE NOMBRE
+            document.getElementById("proveedor_nombre").value = n.cliente_nombre || "";
 
-    // MARCA
-    document.getElementById("anunciante").value = n.anunciante || "";
+            // MARCA
+            document.getElementById("anunciante").value = n.anunciante || "";
 
-    // ===================================
-    // RAZÓN SOCIAL (select)
-    // ===================================
+            // ===================================
+            // RAZÓN SOCIAL (select)
+            // ===================================
 
-    document.getElementById("razon_social").value = n.razon_social_id || "";
+            document.getElementById("razon_social").value = n.razon_social_id || "";
 
-    // ===================================
-    // FACTURACIÓN
-    // ===================================
+            // ===================================
+            // FACTURACIÓN
+            // ===================================
 
-    const ruc = document.getElementById("ruc");
-    if (ruc) ruc.value = n.ruc || "";
+            const ruc = document.getElementById("ruc");
+            if (ruc) ruc.value = n.ruc || "";
 
-    const correo = document.getElementById("correo_admin");
-    if (correo) correo.value = n.correo || "";   // <<--- Ajustado a tu input
+            const correo = document.getElementById("correo_admin");
+            if (correo) correo.value = n.correo || "";   // <<--- Ajustado a tu input
 
-    const telefono = document.getElementById("telefono");
-    if (telefono) telefono.value = n.telefono || "";
+            const telefono = document.getElementById("telefono");
+            if (telefono) telefono.value = n.telefono || "";
 
-    const direccion = document.getElementById("direccion");
-    if (direccion) direccion.value = n.direccion || "";
+            const direccion = document.getElementById("direccion");
+            if (direccion) direccion.value = n.direccion || "";
 
-    const detalle = document.getElementById("detalle_facturacion");
-    if (detalle) detalle.value = n.detalle_facturacion || "";
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const n = window.NOTA_INICIAL;
-    if (!n) return;
+            const detalle = document.getElementById("detalle_facturacion");
+            if (detalle) detalle.value = n.detalle_facturacion || "";
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const n = window.NOTA_INICIAL;
+            if (!n) return;
 
-    console.log("🟦 RAZON SOCIAL ID:", n.razon_social_id);
+            console.log("🟦 RAZON SOCIAL ID:", n.razon_social_id);
 
-    const select = document.getElementById("razon_social");
+            const select = document.getElementById("razon_social");
 
-    console.log("🟨 Options disponibles:");
-    [...select.options].forEach(o => console.log("value=", o.value));
+            console.log("🟨 Options disponibles:");
+            [...select.options].forEach(o => console.log("value=", o.value));
 
-    select.value = n.razon_social_id;
+            select.value = n.razon_social_id;
 
-    console.log("🟩 Resultado final select.value =", select.value);
-});
-</script>
+            console.log("🟩 Resultado final select.value =", select.value);
+        });
+    </script>
 </body>
 {% endblock %}
 

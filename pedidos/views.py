@@ -175,7 +175,6 @@ def nuevo_pedido(request):
         direccion = request.POST.get("direccion")
         detalle_ubicaciones = request.POST.get("detalle_ubicaciones")
         detalle_facturacion = request.POST.get("detalle_facturacion")
-        facturado = request.POST.get("facturado")
 
         # 📦 Procesar ubicaciones FIJAS
         ubicaciones = request.POST.getlist('ubicaciones_seleccionadas') or []
@@ -204,7 +203,7 @@ def nuevo_pedido(request):
                 numero_nota = "SIN_NUMERO"
 
             print("DEBUG valores:",request.POST.get('tarifa_neg_dig'), request.POST.get('tarifa_neg'), request.POST.get('igv'), request.POST.get('total'))
-            print("📤 JSON recibido:", request.POST.get('slot_ocupaciones_json'))
+            print("JSON recibido:", request.POST.get('slot_ocupaciones_json'))
 
             # valida contra la tarifa minima, si es menor cambia esta a 6 y no PDF
 
@@ -225,10 +224,9 @@ def nuevo_pedido(request):
             if ocupaciones:
                 for i in ocupaciones:
                     slot_id = int(i.get('slot_id'))
-                    slot_name = int(i.get('slot'))
                     ubi_id_s = int(i.get('ubicacion_id'))
                     tarifa_mes = i.get('tarifa_mes')
-                    t_minima = SlotDigital.objects.get(ubicacion_id = ubi_id_s, numero_slot = slot_name ).tarifa_minima 
+                    t_minima = SlotDigital.objects.get(ubicacion_id = ubi_id_s, numero_slot = slot_id ).tarifa_minima 
                     
                     if Decimal(tarifa_mes) < t_minima:
                         requiere_aprobacion = 1
@@ -258,8 +256,7 @@ def nuevo_pedido(request):
                     detalle_ubicaciones=detalle_ubicaciones,
                     detalle_facturacion=detalle_facturacion,
                     estado_id = estado_nota,
-                    usuario=request.user,
-                    facturar = facturado
+                    usuario=request.user
                 )
 
             else:
@@ -283,8 +280,7 @@ def nuevo_pedido(request):
                     direccion=direccion,
                     detalle_ubicaciones=detalle_ubicaciones,
                     detalle_facturacion=detalle_facturacion,
-                    usuario=request.user,
-                    facturar = facturado
+                    usuario=request.user
                 )
 
             # 3️⃣ Procesar ubicaciones FIJAS (solo si hay)
@@ -353,7 +349,7 @@ def nuevo_pedido(request):
                         )
 
                     except Exception as e:
-                        print(f"❌ Error procesando slot digital: {e}")
+                        print(f"Error procesando slot digital: {e}")
 
             if not requiere_aprobacion:
             # 5️⃣ Generar PDF siempre, aunque solo haya uno de los dos tipos
@@ -393,7 +389,7 @@ def nuevo_pedido(request):
 
             if enviar_correo:
                 asunto = "⚠️ Verificación requerida: Nota de pedido inferior al monto minimo establecido" 
-                link = "https://limavisual.onrender.com"
+                link = "www.youtube.com"
                 mensaje = f"""
 Estimado/a,
 
@@ -402,7 +398,7 @@ Por tal motivo, se requiere su verificación y aprobación o rechazo antes de pr
 
 Detalles del pedido:
 - Número de nota: {numero_nota}
-- Solicitante = {request.user.first_name} {request.user.last_name}"
+- solicitante = {request.user.first_name} {request.user.last_name}"
 
 Por favor, revise la información y realice la acción correspondiente en el sistema ({link}) (Aprobar / Rechazar) a la brevedad posible para no afectar el flujo operativo.
 
@@ -415,12 +411,12 @@ Sistema de Gestión de Pedidos"""
         asunto,
         mensaje,
         settings.EMAIL_HOST_USER,
-        ['administracion@limavisual.pe','a.perales@limavisual.pe'],
+        ['aleyluis1486@gmail.com'],
         fail_silently=False,
     )
             
         except Exception as e:
-            print(f"⚠️ Error en nuevo_pedido: {e}")
+            print(f"Error en nuevo_pedido: {e}")
             return render(request, 'nuevo_pedido.html', {
                 'listado_tipo_venta': listado_tipo_venta,
                 'listado_tipo_pago': listado_tipo_pago,
@@ -554,7 +550,7 @@ def obtener_ocupaciones_digitales(request):
         elif r.nota_pedido.tipo_venta_id == 4:
             color = "#e95e0e"  # BONIFICACION
         else:
-            color = "#e9150e" # AGENCIA 
+            color = "#e9150e" # AGENCIA
 
         events.append({
             "id": r.id,
@@ -569,7 +565,7 @@ def obtener_ocupaciones_digitales(request):
                 "estado": r.estado.descripcion,
                 "nota": r.nota_pedido_id
             }
-        }) 
+        })
 
     return JsonResponse(events, safe=False)
 
@@ -577,16 +573,6 @@ def calendario_ocupaciones_digitales(request):
     ubicaciones = ubicacion.objects.filter(tipo = 2).order_by('codigo')
     slots = SlotDigital.objects.select_related('ubicacion').all().order_by('ubicacion', 'numero_slot')
     return render(request, 'calendario_digitales.html', {'slots': slots,'ubicaciones': ubicaciones})
-
-def calendario_ocupaciones_digitales_canje(request):
-    ubicaciones = ubicacion.objects.filter(tipo = 2).order_by('codigo')
-    slots = (
-    SlotDigital.objects
-    .select_related('ubicacion')
-    .filter(es_canje=True)
-    .order_by('ubicacion', 'numero_slot')
-)
-    return render(request, 'calendario_canjes.html', {'slots': slots,'ubicaciones': ubicaciones})
 
 
 def generar_pdf_nota(request, nota_id):
@@ -601,10 +587,7 @@ def generar_pdf_nota(request, nota_id):
     nombre_cliente_pdf = nota.cliente.nombre_comercial
     correo_admin_pdf = nota.razon_social.correo
     correo_contac_pdf = nota.cliente.correo_contacto
-    try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-    except locale.Error:
-        locale.setlocale(locale.LC_TIME, '')
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
     now = datetime.now()
     mes_letra = now.strftime("%B")
 
@@ -637,10 +620,10 @@ def generar_pdf_nota(request, nota_id):
         'nota': nota,
         'detalles_fijas': detalles_fijas,
         'reservas_digitales': reservas_list,
-        'empresa_nombre': 'LIMA LED SAC',
-        'empresa_direccion': 'CAL.TOMAS RAMSEY NRO. 751 URB. SAN FELIPE',
-        'empresa_telefono': '958522150',
-        'empresa_ruc': '20600801831',
+        'empresa_nombre': 'LIMA VISUAL',
+        'empresa_direccion': 'Dirección de la empresa',
+        'empresa_telefono': '999-999-999',
+        'empresa_ruc': '12345678901',
         'logo_url': logo_base64,
         'now': datetime.now(),
         'usuario': request.user,
@@ -678,6 +661,9 @@ def verificar_disponibilidad(request):
         ff = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
     except:
         return JsonResponse({'ok': False, 'error': 'Fechas inválidas'}, status=400)
+    
+    if fi > ff:
+        return JsonResponse({'ok': False, 'error': 'La fecha de inicio no puede ser mayor a la fecha fin'}, status=400)
 
     # Fijas
     if ubicacion_id:
@@ -712,6 +698,8 @@ def verificar_disponibilidad_digital(request):
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
 
+    # print(slot_id)
+
     if not (ubicacion_id and slot_id and fecha_inicio and fecha_fin):
         return JsonResponse({'ok': False, 'mensaje': 'Faltan parámetros'}, status=400)
 
@@ -721,17 +709,20 @@ def verificar_disponibilidad_digital(request):
     except ValueError:
         return JsonResponse({'ok': False, 'mensaje': 'Fechas inválidas'}, status=400)
 
+    if fi > ff:
+        return JsonResponse({'ok': False, 'mensaje': 'La fecha de inicio no puede ser mayor a la fecha fin'}, status=400)
+
     # 🔍 Buscar reservas que se superpongan en ese slot de esa ubicación
 
     qs = SlotDigital.objects.filter(ubicacion_id = ubicacion_id, numero_slot = slot_id).first()
-    print("DEBUG SlotDigital ----------------")
-    print("ubicacion_id:", ubicacion_id)
-    print("slot_id:", slot_id)
-    print("qs:", qs)
+    
+    if not qs:
+        return JsonResponse({'ok': False, 'mensaje': 'Slot no encontrado'}, status=404)
+
     if qs.es_canje == False:
         conflicto = ReservaSlot.objects.filter(
             slot__ubicacion_id=ubicacion_id,
-            slot_id=slot_id,
+            slot_id=qs.id,
             fecha_inicio__lte=ff,
             fecha_fin__gte=fi,
             estado_id = 2  
@@ -753,7 +744,7 @@ def verificar_disponibilidad_digital(request):
                 )
                 .filter(
                     slot__ubicacion_id=ubicacion_id,
-                    slot_id=slot_id,
+                    slot_id=qs.id,
                     estado_id=2,
                     mes_inicio=fi.month,
                     anio_inicio=fi.year,
@@ -774,15 +765,9 @@ def verificar_disponibilidad_digital(request):
 
 def gestion_notas(request):
     usuario=request.user
-    if usuario.is_superuser:
-        listado_notas = NotaPedido.objects.all()
-        listado_estado = EstadoNota.objects.all().order_by('descripcion')
-        return render(request, "mis_np.html", {'listado_notas':listado_notas, 'listado_estado':listado_estado})
-    else:
-        usuario=request.user
-        listado_notas = NotaPedido.objects.filter(usuario_id = usuario)
-        listado_estado = EstadoNota.objects.all().order_by('descripcion')
-        return render(request, "mis_np.html", {'listado_notas':listado_notas, 'listado_estado':listado_estado})
+    listado_notas = NotaPedido.objects.filter(usuario_id = usuario)
+    listado_estado = EstadoNota.objects.all().order_by('descripcion')
+    return render(request, "mis_np.html", {'listado_notas':listado_notas, 'listado_estado':listado_estado})
 
 def cambiar_estado_nota(request):
     if request.method == "POST":
@@ -817,10 +802,7 @@ def filtrar_notas(request):
     estado = request.GET.get('estado', '')
     usuario=request.user
 
-    if usuario.is_superuser:
-        notas = NotaPedido.objects.all()
-    else:
-        notas = NotaPedido.objects.filter(usuario_id = usuario)
+    notas = NotaPedido.objects.filter(usuario_id = usuario)
 
     if numero:
         notas = notas.filter(numero_np__icontains=numero)
@@ -835,7 +817,7 @@ def filtrar_notas(request):
     if estado:
         notas = notas.filter(estado_id=estado)
 
-    data = list(notas.values('id', 'numero_np', 'fecha', 'cliente__nombre_comercial', 'anunciante', 'estado__descripcion', 'estado', 'usuario__username'))
+    data = list(notas.values('id', 'numero_np', 'fecha', 'cliente__nombre_comercial', 'anunciante', 'estado__descripcion', 'estado'))
     return JsonResponse(data, safe=False)
 
 def filtrar_notas_n_autoriza(request):
@@ -1032,10 +1014,7 @@ def detalle_aprobar_negar_np(request, nota_id):
     nombre_cliente_pdf = nota.cliente.nombre_comercial
     correo_admin_pdf = nota.razon_social.correo
     correo_contac_pdf = nota.cliente.correo_contacto
-    try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-    except locale.Error:
-        locale.setlocale(locale.LC_TIME, '')
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
     now = datetime.now()
     mes_letra = now.strftime("%B")
 
@@ -1113,10 +1092,10 @@ def detalle_aprobar_negar_np(request, nota_id):
         'nota': nota,
         'detalles_fijas': detalles_fijas_list,
         'reservas_digitales': reservas_list,
-        'empresa_nombre': 'LIMA LED SAC',
-        'empresa_direccion': 'Cal. Tomas Ramsey Nro. 751',
-        'empresa_telefono': '958522150',
-        'empresa_ruc': '20600801831',
+        'empresa_nombre': 'LIMA VISUAL',
+        'empresa_direccion': 'Dirección de la empresa',
+        'empresa_telefono': '999-999-999',
+        'empresa_ruc': '12345678901',
         'logo_url': logo_base64,
         'now': datetime.now(),
         'usuario': request.user,
@@ -1137,7 +1116,7 @@ def aprobar_nota(request, nota_id):
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
     asunto = "✅ Nota de Pedido aprobada." 
-    link = "https://limavisual.onrender.com"
+    link = "www.youtube.com"
     mensaje = f"""
 
 Estimado/a,
@@ -1179,7 +1158,7 @@ def rechazar_nota(request, nota_id):
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
     asunto = "❌ Nota de Pedido rechazada." 
-    link = "https://limavisual.onrender.com"
+    link = "www.youtube.com"
     mensaje = f"""
 
 Estimado/a,
@@ -1204,4 +1183,3 @@ Sistema de Gestión de Pedidos"""
     )
 
     return redirect('autorizar')
-
