@@ -344,9 +344,17 @@
 
                 <!-- 🧾 Bloque principal: Datos de Facturación (3/4 del espacio) -->
                 <div class="md:basis-3/4 mb-6 p-4 bg-gray-50 border border-gray-300 rounded-xl shadow-sm">
-                    <div class="mb-3 pb-2 border-b border-gray-300">
-                        <h2 class="text-xl font-semibold text-gray-900">Datos de Facturación</h2>
+                    <div class="mb-3 pb-2 border-b border-gray-300 flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-gray-900">
+                            Datos de Facturación
+                        </h2>
 
+                        <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input type="hidden" name="facturado" value="0">
+                            <input type="checkbox" name="facturado" value="1"
+                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span>Facturado</span>
+                        </label>
                     </div>
 
                     <div>

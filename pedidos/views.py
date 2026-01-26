@@ -175,6 +175,7 @@ def nuevo_pedido(request):
         direccion = request.POST.get("direccion")
         detalle_ubicaciones = request.POST.get("detalle_ubicaciones")
         detalle_facturacion = request.POST.get("detalle_facturacion")
+        facturado = request.POST.get("facturado")
 
         # 📦 Procesar ubicaciones FIJAS
         ubicaciones = request.POST.getlist('ubicaciones_seleccionadas') or []
