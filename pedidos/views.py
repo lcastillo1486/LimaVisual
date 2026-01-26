@@ -531,7 +531,7 @@ def calendario_ocupaciones_fijas(request):
 
 @require_GET
 def obtener_ocupaciones_digitales(request):
-    qs = ReservaSlot.objects.select_related('slot__ubicacion', 'nota_pedido', 'nota_pedido__tipo_venta') # OCUPADAS 
+    qs = (ReservaSlot.objects.select_related('slot__ubicacion','nota_pedido','nota_pedido__tipo_venta').filter(estado_id=2))  
 
     # 📌 Filtros
     ubicacion_id = request.GET.get('ubicacion_id')
