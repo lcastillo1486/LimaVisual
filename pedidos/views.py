@@ -1183,3 +1183,8 @@ Sistema de Gestión de Pedidos"""
     )
 
     return redirect('autorizar')
+
+def calendario_ocupaciones_digitales_canje(request):
+    ubicaciones = ubicacion.objects.filter(tipo = 2).order_by('codigo')
+    slots = SlotDigital.objects.select_related('ubicacion').all().order_by('ubicacion', 'numero_slot')
+    return render(request, 'calendario_canjes.html', {'slots': slots,'ubicaciones': ubicaciones})
