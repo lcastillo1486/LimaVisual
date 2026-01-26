@@ -522,13 +522,28 @@
                 <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-2/3 lg:w-1/2 p-4 relative">
 
                     <!-- Botón cerrar -->
-                    <button onclick="document.getElementById('modal-ubicaciones-digitales').classList.add('hidden')"
+                    <button onclick="cerrarModalDigitales()"
                         class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✕</button>
 
-                    <h2 class="text-lg font-semibold mb-4 text-gray-800">Seleccionar Ubicaciones Digitales</h2>
+                    <!-- Header con título y toggle -->
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Seleccionar Ubicaciones Digitales</h2>
 
-                    <!-- Contenedor scroll general -->
-                    <div class="max-h-[70vh] overflow-y-auto space-y-4">
+                        <!-- Toggle de modo -->
+                        <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                            <button type="button" id="btn-modo-individual" onclick="toggleModoSeleccion('individual')"
+                                class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-gray-800 text-white">
+                                Individual
+                            </button>
+                            <button type="button" id="btn-modo-masivo" onclick="toggleModoSeleccion('masivo')"
+                                class="px-3 py-1 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800">
+                                Masivo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 🔹 MODO INDIVIDUAL (existente, sin cambios) -->
+                    <div id="modo-individual-container" class="max-h-[70vh] overflow-y-auto space-y-4">
 
                         {% for ubicacion, slots in ubicaciones_con_slots.items %}
                         <!-- Acordeón por ubicación -->
@@ -616,6 +631,95 @@
                     </div>
                 </div>
                 {% endfor %}
+            </div>
+
+            <!-- 🔹 MODO MASIVO (nuevo) -->
+            <div id="modo-masivo-container" class="hidden max-h-[70vh] overflow-y-auto">
+
+                <!-- Panel de configuración global -->
+                <div class="bg-gray-50 border border-gray-300 rounded-xl p-4 mb-4">
+                    <h3 class="text-sm font-semibold text-gray-800 mb-3">📅 Configuración Global</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Fecha Inicio</label>
+                            <input type="date" id="masivo-fecha-inicio"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Fecha Fin</label>
+                            <input type="date" id="masivo-fecha-fin"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Tarifa/mes (S/)</label>
+                            <input type="number" step="0.01" id="masivo-tarifa"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-right focus:ring-2 focus:ring-gray-500"
+                                placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex items-center gap-2">
+                        <button type="button" onclick="validarDisponibilidadMasiva()" id="btn-validar-masivo"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                            🔍 Validar Disponibilidad
+                        </button>
+                        <span id="masivo-resultado-validacion" class="text-sm"></span>
+                    </div>
+                </div>
+
+                <!-- Lista de slots para selección masiva -->
+                <div class="bg-white border border-gray-300 rounded-xl overflow-hidden">
+                    <div class="bg-gray-800 text-white px-4 py-2 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold">Seleccionar Slots</h3>
+                        <span id="masivo-contador-slots" class="text-xs">0 seleccionados</span>
+                    </div>
+
+                    <div class="max-h-96 overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2 text-left w-10">
+                                        <input type="checkbox" id="masivo-select-all"
+                                            onchange="toggleSelectAllMasivo(this)"
+                                            class="rounded text-gray-600 focus:ring-gray-500">
+                                    </th>
+                                    <th class="px-3 py-2 text-left">Ubicación</th>
+                                    <th class="px-3 py-2 text-center">Slot</th>
+                                    <th class="px-3 py-2 text-center">Tarifa Fría</th>
+                                    <th class="px-3 py-2 text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="masivo-slots-list">
+                                {% for ubicacion, slots in ubicaciones_con_slots.items %}
+                                {% for slot in slots %}
+                                <tr class="border-t hover:bg-gray-50 slot-masivo-row" data-slot-id="{{ slot.id }}"
+                                    data-slot-numero="{{ slot.numero_slot }}"
+                                    data-ubicacion-id="{{ slot.ubicacion.id }}" data-codigo="{{ ubicacion.codigo }}"
+                                    data-direccion="{{ ubicacion.direccion }}" data-tarifa-fria="{{ slot.tarifa_fria }}"
+                                    data-tipo-venta="{{ slot.tipo_venta.id }}"
+                                    data-es-canje="{{ slot.es_canje|yesno:'true,false' }}">
+                                    <td class="px-3 py-2">
+                                        <input type="checkbox"
+                                            class="masivo-slot-checkbox rounded text-gray-600 focus:ring-gray-500"
+                                            onchange="actualizarContadorMasivo()">
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <div class="font-medium text-gray-800">{{ ubicacion.codigo }}</div>
+                                        <div class="text-xs text-gray-500">{{ ubicacion.direccion }}</div>
+                                    </td>
+                                    <td class="px-3 py-2 text-center font-medium">{{ slot.numero_slot }}</td>
+                                    <td class="px-3 py-2 text-center">S/ {{ slot.tarifa_fria }}</td>
+                                    <td class="px-3 py-2 text-center">
+                                        <span class="masivo-slot-status text-xs">⏳</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Botones -->
@@ -1028,6 +1132,233 @@
         }
     </script>
 
+    <!-- 🔹 FUNCIONES PARA MODO MASIVO -->
+    <script>
+        /* ---------- Toggle entre modos ---------- */
+        function toggleModoSeleccion(modo) {
+            const modoIndividual = document.getElementById('modo-individual-container');
+            const modoMasivo = document.getElementById('modo-masivo-container');
+            const btnIndividual = document.getElementById('btn-modo-individual');
+            const btnMasivo = document.getElementById('btn-modo-masivo');
+
+            if (modo === 'individual') {
+                // Mostrar modo individual
+                modoIndividual.classList.remove('hidden');
+                modoMasivo.classList.add('hidden');
+
+                // Actualizar estilos de botones
+                btnIndividual.classList.add('bg-gray-800', 'text-white');
+                btnIndividual.classList.remove('text-gray-600', 'hover:text-gray-800');
+                btnMasivo.classList.remove('bg-gray-800', 'text-white');
+                btnMasivo.classList.add('text-gray-600', 'hover:text-gray-800');
+
+                console.log('✅ Modo Individual activado');
+            } else if (modo === 'masivo') {
+                // Mostrar modo masivo
+                modoIndividual.classList.add('hidden');
+                modoMasivo.classList.remove('hidden');
+
+                // Actualizar estilos de botones
+                btnMasivo.classList.add('bg-gray-800', 'text-white');
+                btnMasivo.classList.remove('text-gray-600', 'hover:text-gray-800');
+                btnIndividual.classList.remove('bg-gray-800', 'text-white');
+                btnIndividual.classList.add('text-gray-600', 'hover:text-gray-800');
+
+                console.log('✅ Modo Masivo activado');
+                actualizarContadorMasivo();
+            }
+        }
+
+        /* ---------- Actualizar contador de slots seleccionados ---------- */
+        function actualizarContadorMasivo() {
+            const checkboxes = document.querySelectorAll('.masivo-slot-checkbox:checked');
+            const contador = document.getElementById('masivo-contador-slots');
+            contador.textContent = `${checkboxes.length} seleccionados`;
+        }
+
+        /* ---------- Seleccionar/deseleccionar todos ---------- */
+        function toggleSelectAllMasivo(checkbox) {
+            const allCheckboxes = document.querySelectorAll('.masivo-slot-checkbox');
+            allCheckboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            actualizarContadorMasivo();
+        }
+
+        /* ---------- Validar disponibilidad masiva ---------- */
+        async function validarDisponibilidadMasiva() {
+            const fechaInicio = document.getElementById('masivo-fecha-inicio').value;
+            const fechaFin = document.getElementById('masivo-fecha-fin').value;
+            const tarifa = document.getElementById('masivo-tarifa').value;
+            const resultado = document.getElementById('masivo-resultado-validacion');
+            const btnValidar = document.getElementById('btn-validar-masivo');
+
+            // Limpiar estados previos
+            document.querySelectorAll('.masivo-slot-status').forEach(span => {
+                span.textContent = '⏳';
+                span.style.color = '';
+            });
+
+            // Validaciones básicas
+            if (!fechaInicio || !fechaFin) {
+                resultado.textContent = '⚠️ Debes ingresar fecha de inicio y fin';
+                resultado.style.color = 'orange';
+                return;
+            }
+
+            if (fechaFin < fechaInicio) {
+                resultado.textContent = '⚠️ La fecha fin no puede ser menor que la fecha inicio';
+                resultado.style.color = 'orange';
+                return;
+            }
+
+            if (!tarifa || parseFloat(tarifa) <= 0) {
+                resultado.textContent = '⚠️ Debes ingresar una tarifa válida';
+                resultado.style.color = 'orange';
+                return;
+            }
+
+            // Obtener slots seleccionados
+            const slotsSeleccionados = [];
+            document.querySelectorAll('.masivo-slot-checkbox:checked').forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                slotsSeleccionados.push({
+                    checkbox: checkbox,
+                    row: row,
+                    ubicacionId: row.dataset.ubicacionId,
+                    slotNumero: row.dataset.slotNumero, // Usar nombre explícito
+                    statusSpan: row.querySelector('.masivo-slot-status')
+                });
+            });
+
+            if (slotsSeleccionados.length === 0) {
+                resultado.textContent = '⚠️ Debes seleccionar al menos un slot';
+                resultado.style.color = 'orange';
+                return;
+            }
+
+            // Deshabilitar botón durante validación
+            btnValidar.disabled = true;
+            btnValidar.textContent = '⏳ Validando...';
+            resultado.textContent = `Validando ${slotsSeleccionados.length} slots...`;
+            resultado.style.color = 'blue';
+
+            // Validar cada slot
+            let todosDisponibles = true;
+            let validados = 0;
+
+            for (const slot of slotsSeleccionados) {
+                try {
+                    // ⚠️ CORRECCIÓN: Usar slotNumero (el número visible) para la API de disponibilidad
+                    const resp = await fetch(
+                        `/api/verificar_disponibilidad_digital/?ubicacion_id=${slot.ubicacionId}&slot_id=${slot.slotNumero}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+                    );
+                    const data = await resp.json();
+
+                    if (data.ok) {
+                        slot.statusSpan.textContent = '✅';
+                        slot.statusSpan.style.color = 'green';
+                        slot.statusSpan.title = data.mensaje;
+                        slot.row.dataset.validado = 'true';
+                    } else {
+                        slot.statusSpan.textContent = '❌';
+                        slot.statusSpan.style.color = 'red';
+                        slot.statusSpan.title = data.mensaje;
+                        slot.row.dataset.validado = 'false';
+                        todosDisponibles = false;
+                    }
+                    validados++;
+                } catch (error) {
+                    console.error('Error validando slot:', error);
+                    slot.statusSpan.textContent = '❌';
+                    slot.statusSpan.style.color = 'red';
+                    slot.statusSpan.title = 'Error al validar';
+                    slot.row.dataset.validado = 'false';
+                    todosDisponibles = false;
+                }
+            }
+
+            // Mostrar resultado final
+            btnValidar.disabled = false;
+            btnValidar.textContent = '🔍 Validar Disponibilidad';
+
+            if (todosDisponibles) {
+                resultado.textContent = `✅ Todos los slots están disponibles (${validados}/${slotsSeleccionados.length})`;
+                resultado.style.color = 'green';
+                document.getElementById('btn-digital').disabled = false;
+            } else {
+                resultado.textContent = `❌ Algunos slots no están disponibles. Revisa los estados.`;
+                resultado.style.color = 'red';
+                document.getElementById('btn-digital').disabled = true;
+            }
+        }
+
+        /* ---------- Aplicar selección masiva al array global ---------- */
+        function aplicarSeleccionMasiva() {
+            const fechaInicio = document.getElementById('masivo-fecha-inicio').value;
+            const fechaFin = document.getElementById('masivo-fecha-fin').value;
+            const tarifa = document.getElementById('masivo-tarifa').value;
+
+            // Obtener solo los slots validados y seleccionados
+            const slotsValidados = [];
+            document.querySelectorAll('.masivo-slot-checkbox:checked').forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                if (row.dataset.validado === 'true') {
+                    slotsValidados.push({
+                        slot_id: row.dataset.slotId,
+                        ubicacion_id: row.dataset.ubicacionId,
+                        codigo: row.dataset.codigo,
+                        direccion: row.dataset.direccion,
+                        slot: row.dataset.slotNumero,
+                        rangos: [{
+                            inicio: fechaInicio,
+                            fin: fechaFin,
+                            tarifa: tarifa
+                        }]
+                    });
+                }
+            });
+
+            // Agregar al array global (sin duplicados)
+            slotsValidados.forEach(nuevoSlot => {
+                const existe = seleccionUbicacionesDigitales.findIndex(
+                    item => String(item.slot_id) === String(nuevoSlot.slot_id)
+                );
+
+                if (existe === -1) {
+                    seleccionUbicacionesDigitales.push(nuevoSlot);
+                } else {
+                    // Si ya existe, agregar el rango
+                    seleccionUbicacionesDigitales[existe].rangos.push(...nuevoSlot.rangos);
+                }
+            });
+
+            console.log(`✅ ${slotsValidados.length} slots agregados desde modo masivo`);
+            console.log('📦 Slots validados:', slotsValidados);
+            console.log('📦 Array global completo:', seleccionUbicacionesDigitales);
+
+            // ⚠️ IMPORTANTE: Sincronizar el hidden inmediatamente
+            sincronizarHiddenDigital();
+
+            // Limpiar selección masiva
+            document.querySelectorAll('.masivo-slot-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('masivo-select-all').checked = false;
+            document.querySelectorAll('.masivo-slot-status').forEach(span => {
+                span.textContent = '⏳';
+                span.style.color = '';
+            });
+            document.getElementById('masivo-resultado-validacion').textContent = '';
+            actualizarContadorMasivo();
+        }
+
+        /* ---------- Cerrar modal y resetear ---------- */
+        function cerrarModalDigitales() {
+            document.getElementById('modal-ubicaciones-digitales').classList.add('hidden');
+            // Resetear a modo individual
+            toggleModoSeleccion('individual');
+        }
+    </script>
+
 
     <!-- LLENAR UBICACIONES DIGITALES  -->
 
@@ -1121,92 +1452,14 @@
             });
         }
 
-        /* ---------- renderizar la tabla resumen (1 fila por rango) y actualizar hidden ---------- */
-        function guardarSeleccionUbicacionesDigitales() {
-            // 1) actualizar desde inputs
-            actualizarFechasDesdeModal();
-
-            // 2) validar: cada slot seleccionado debe tener al menos un rango
-            const faltantes = [];
-            let rangoInvalido = false;
-
-            seleccionUbicacionesDigitales.forEach(item => {
-                if (!item.rangos || item.rangos.length === 0) {
-                    faltantes.push(`${item.codigo || ('slot ' + item.slot)}`);
-                }
-                // Validar fechas
-                item.rangos.forEach(r => {
-                    if (new Date(r.inicio) > new Date(r.fin)) {
-                        rangoInvalido = true;
-                    }
-                });
-            });
-
-            if (rangoInvalido) {
-                alert('⚠️ Se detectaron rangos con fecha de inicio mayor a fecha de fin. Por favor corrígelos.');
-                return;
-            }
-
-            if (faltantes.length > 0) {
-                alert('Debes agregar al menos un rango de fechas a: \n' + faltantes.join('\n'));
-                return; // detiene el guardado
-            }
-
-            // 3) renderizar resumen (una fila por rango)
-            const tbody = document.getElementById('body-seleccion-digital');
-            tbody.innerHTML = '';
-            seleccionUbicacionesDigitales.forEach(item => {
-                item.rangos.forEach(rango => {
-
-                    // 🗓️ Calcular días entre inicio y fin
-                    const fechaInicio = new Date(rango.inicio);
-                    const fechaFin = new Date(rango.fin);
-                    let dias = 0;
-
-                    if (!isNaN(fechaInicio) && !isNaN(fechaFin)) {
-                        dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1; // incluye ambos días
-                    }
-
-                    // 💰 Calcular monto total (opcional)
-                    const tarifa = parseFloat(rango.tarifa).toFixed(2) || 0;
-                    const tarifaDiaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
-                    const montoTotal = tarifa > 0 && dias > 0 ? (tarifaDiaria * dias).toFixed(2) : "0.00";
-
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-        <td class="px-3 py-2">${item.codigo || '-'}</td>
-        <td class="px-3 py-2 text-center">${item.slot || '-'}</td>
-        <td class="px-3 py-2 text-center">${rango.inicio}</td>
-        <td class="px-3 py-2 text-center">${rango.fin}</td>
-        <td class="px-3 py-2 text-center">${dias}</td>
-        <td class="px-3 py-2 text-center">${tarifa}</td>
-        <td class="px-3 py-2 text-center">${tarifaDiaria}</td>
-        <td class="px-3 py-2 text-center font-semibold text-green-700">${montoTotal}</td>
-        
-      `;
-                    tbody.appendChild(tr);
-                });
-            });
-
-            // 4) actualizar input hidden JSON
-            let hidden = document.getElementById('slot_ocupaciones_json');
-            if (!hidden) {
-                hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.name = 'slot_ocupaciones_json';
-                hidden.id = 'slot_ocupaciones_json';
-                document.querySelector('form').appendChild(hidden);
-            }
-            // Guardamos sólo las filas que tienen rangos (como lista plana de ocupaciones)
+        /* ---------- Función centralizada para sincronizar el hidden ---------- */
+        function sincronizarHiddenDigital() {
             const listaOcupaciones = [];
             seleccionUbicacionesDigitales.forEach(item => {
                 item.rangos.forEach(r => {
-                    // 🧮 Calcular días y montos antes de agregar al JSON
                     const fechaInicio = new Date(r.inicio);
                     const fechaFin = new Date(r.fin);
                     let dias = 0;
-
                     if (!isNaN(fechaInicio) && !isNaN(fechaFin)) {
                         dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
                     }
@@ -1215,43 +1468,96 @@
                     const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
                     const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
 
-                    diario = tarifa_diaria;
-                    total = monto_total;
-
                     listaOcupaciones.push({
-                        ubicacion_id: item.ubicacion_id,
-                        slot_id: item.slot_id,
+                        ubicacion_id: String(item.ubicacion_id),
+                        slot_id: String(item.slot_id),
                         codigo: item.codigo,
                         direccion: item.direccion,
                         slot: item.slot,
                         fecha_inicio: r.inicio,
                         fecha_fin: r.fin,
                         dias: dias,
-                        tarifa_mes: r.tarifa,
-                        tarifa_dia: diario,
-                        monto_total: total
-
+                        tarifa_mes: String(r.tarifa),
+                        tarifa_dia: tarifa_diaria,
+                        monto_total: monto_total
                     });
                 });
             });
-            hidden.value = JSON.stringify(listaOcupaciones);
 
-            // 💰 Calcular la sumatoria total de los montos digitales
+            let hidden = document.getElementById('slot_ocupaciones_json');
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'slot_ocupaciones_json';
+                hidden.id = 'slot_ocupaciones_json';
+                document.querySelector('form').appendChild(hidden);
+            }
+            hidden.value = JSON.stringify(listaOcupaciones);
+            console.log('🔹 JSON Sincronizado para el servidor:', hidden.value);
+
+            // 💰 Actualizar montos en la UI principal
             let totalDigitales = 0;
-            listaOcupaciones.forEach(o => {
-                totalDigitales += parseFloat(o.monto_total) || 0;
+            listaOcupaciones.forEach(o => { totalDigitales += parseFloat(o.monto_total) || 0; });
+            const inputTotalDig = document.getElementById("tarifa_neg_dig");
+            if (inputTotalDig) inputTotalDig.value = totalDigitales.toFixed(2);
+
+            if (typeof calcularTotalesGenerales === "function") calcularTotalesGenerales();
+        }
+
+        /* ---------- renderizar la tabla resumen (1 fila por rango) y actualizar hidden ---------- */
+        function guardarSeleccionUbicacionesDigitales() {
+            const modoMasivoVisible = !document.getElementById('modo-masivo-container').classList.contains('hidden');
+
+            if (modoMasivoVisible) {
+                aplicarSeleccionMasiva();
+            } else {
+                actualizarFechasDesdeModal();
+            }
+
+            // 1) Validar faltantes
+            const faltantes = [];
+            let rangoInvalido = false;
+            seleccionUbicacionesDigitales.forEach(item => {
+                if (!item.rangos || item.rangos.length === 0) faltantes.push(`${item.codigo || item.slot}`);
+                item.rangos.forEach(r => { if (new Date(r.inicio) > new Date(r.fin)) rangoInvalido = true; });
             });
 
-            // 🧾 Mostrarlo en el input total
-            const inputTotalDig = document.getElementById("tarifa_neg_dig");
-            if (inputTotalDig) {
-                inputTotalDig.value = totalDigitales.toFixed(2);
+            if (rangoInvalido) { alert('⚠️ Fechas inválidas detected'); return; }
+            if (faltantes.length > 0) { alert('Faltan fechas para: ' + faltantes.join(', ')); return; }
+
+            // 2) Renderizar UI
+            const tbody = document.getElementById('body-seleccion-digital');
+            if (tbody) {
+                tbody.innerHTML = '';
+                seleccionUbicacionesDigitales.forEach(item => {
+                    item.rangos.forEach(rango => {
+                        const fi = new Date(rango.inicio);
+                        const ff = new Date(rango.fin);
+                        let d = (!isNaN(fi) && !isNaN(ff)) ? Math.ceil((ff - fi) / 86400000) + 1 : 0;
+                        let t = parseFloat(rango.tarifa).toFixed(2);
+                        let td = (t / 30).toFixed(2);
+                        let mt = (td * d).toFixed(2);
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-3 py-2">${item.codigo || '-'}</td>
+                            <td class="px-3 py-2 text-center">${item.slot || '-'}</td>
+                            <td class="px-3 py-2 text-center">${rango.inicio}</td>
+                            <td class="px-3 py-2 text-center">${rango.fin}</td>
+                            <td class="px-3 py-2 text-center">${d}</td>
+                            <td class="px-3 py-2 text-center">${t}</td>
+                            <td class="px-3 py-2 text-center">${td}</td>
+                            <td class="px-3 py-2 text-center font-semibold text-green-700">${mt}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
             }
-            console.log("🧩 JSON Final slot_ocupaciones_json:", JSON.stringify(listaOcupaciones, null, 2));
 
-            calcularTotalesGenerales()
+            // 3) Sincronizar Hidden
+            sincronizarHiddenDigital();
 
-            // 5) cerrar modal
+            // 4) Cerrar modal
             const modal = document.getElementById('modal-ubicaciones-digitales');
             if (modal) modal.classList.add('hidden');
         }
@@ -1311,50 +1617,8 @@
 
             // si el usuario presiona Submit, aseguramos que el hidden contenga los datos actuales
             form.addEventListener('submit', function (e) {
-                // actualizar desde modal inputs por si no se guardó el modal
-                actualizarFechasDesdeModal();
-
-                // reconstruir hidden (igual que en guardarSeleccionUbicacionesDigitales)
-                const listaOcupaciones = [];
-                seleccionUbicacionesDigitales.forEach(item => {
-                    item.rangos.forEach(r => {
-                        // recalculamos por seguridad
-                        const fechaInicio = new Date(r.inicio);
-                        const fechaFin = new Date(r.fin);
-                        let dias = 0;
-                        if (!isNaN(fechaInicio) && !isNaN(fechaFin)) {
-                            dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
-                        }
-
-                        const tarifa = parseFloat(r.tarifa) || 0;
-                        const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
-                        const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
-
-                        listaOcupaciones.push({
-                            ubicacion_id: item.ubicacion_id,
-                            slot_id: item.slot_id,
-                            codigo: item.codigo,
-                            direccion: item.direccion,
-                            slot: item.slot,
-                            fecha_inicio: r.inicio,
-                            fecha_fin: r.fin,
-                            dias: dias,
-                            tarifa_mes: tarifa,
-                            tarifa_dia: tarifa_diaria,
-                            monto_total: monto_total
-                        });
-                    });
-                });
-                let hidden = document.getElementById('slot_ocupaciones_json');
-                if (!hidden) {
-                    hidden = document.createElement('input');
-                    hidden.type = 'hidden';
-                    hidden.name = 'slot_ocupaciones_json';
-                    hidden.id = 'slot_ocupaciones_json';
-                    form.appendChild(hidden);
-                }
-                hidden.value = JSON.stringify(listaOcupaciones);
-                // el form continúa y se envía normalmente
+                // Sincronizar una última vez antes de enviar
+                sincronizarHiddenDigital();
             });
         });
     </script>
@@ -1532,36 +1796,36 @@
             btnDigital.disabled = false;
 
             // 🔄 Función centralizada para validar el estado del botón
-            window.validarEstadoBotonDigital = function() {
+            window.validarEstadoBotonDigital = function () {
                 const todasLasFilas = document.querySelectorAll(".fila-slot");
                 let hayErrores = false;
-                
+
                 todasLasFilas.forEach(fila => {
                     const fechaInicio = fila.querySelector(".fecha-inicio");
                     const fechaFin = fila.querySelector(".fecha-fin");
-                    
+
                     if (fechaInicio && fechaFin) {
                         const fi = fechaInicio.value;
                         const ff = fechaFin.value;
-                        
+
                         // Si hay fechas y la fecha fin es menor que la inicio, hay error
                         if (fi && ff && ff < fi) {
                             hayErrores = true;
                         }
-                        
+
                         // Si el fondo es rojo (error de validación), hay error
                         if (fila.style.backgroundColor === "rgb(255, 230, 230)") {
                             hayErrores = true;
                         }
                     }
                 });
-                
+
                 btnDigital.disabled = hayErrores;
                 console.log(`🔍 Estado botón digital: ${hayErrores ? 'DESHABILITADO' : 'HABILITADO'}`);
             };
 
             // 🗑️ Función para eliminar fila y re-validar
-            window.eliminarFilaDigital = function(boton) {
+            window.eliminarFilaDigital = function (boton) {
                 const fila = boton.parentElement;
                 fila.remove();
                 console.log("🗑️ Fila eliminada, re-validando estado del botón...");
