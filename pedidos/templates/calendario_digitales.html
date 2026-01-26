@@ -121,7 +121,7 @@
                 <select id="select-slot" class="border rounded p-2">
                     <option value="">— Seleccione —</option>
                     {% for s in slots %}
-                    <option value="{{ s.id }}" data-ubicacion="{{ s.ubicacion.id }}">
+                    <option value="{{ s.numero_slot }}" data-ubicacion="{{ s.ubicacion.id }}">
                         {{ s.ubicacion.nombre }} — Slot {{ s.numero_slot }}
                     </option>
                     {% endfor %}
@@ -156,9 +156,9 @@
             });
 
             selectSlot.addEventListener('change', function () {
-                filtrosActivos = !!selectUbicacion.value; // sigue dependiendo de la ubicación
-                calendar.refetchEvents();
-            });
+    filtrosActivos = selectUbicacion.value !== "";
+    calendar.refetchEvents();
+});
 
             // --- Inicializar FullCalendar ---
             const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -191,7 +191,7 @@
                         end: info.endStr
                     });
                     if (selectUbicacion.value) params.set('ubicacion_id', selectUbicacion.value);
-                    if (selectSlot.value) params.set('slot_id', selectSlot.value);
+                    if (selectSlot.value) params.set('numero_slot', selectSlot.value);
 
                     fetch(`/api/ocupaciones-digitales/?${params}`)
                         .then(r => r.json())
