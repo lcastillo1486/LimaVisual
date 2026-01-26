@@ -223,16 +223,30 @@ def nuevo_pedido(request):
             
             if ocupaciones:
                 for i in ocupaciones:
-                    slot_id = int(i.get('slot_id'))
-                    ubi_id_s = int(i.get('ubicacion_id'))
-                    tarifa_mes = i.get('tarifa_mes')
-                    t_minima = SlotDigital.objects.get(ubicacion_id = ubi_id_s, numero_slot = slot_id ).tarifa_minima 
-                    
-                    if Decimal(tarifa_mes) < t_minima:
-                        requiere_aprobacion = 1
-                        estado_nota = 6
-                        enviar_correo = 1
-                        messages.error(request, "⚠️ Esta nota de pedido requiere autorización.")
+                    try:
+                        slot_id = i.get('slot_id')
+                        ubi_id_s = i.get('ubicacion_id')
+                        slot_num = i.get('slot')
+                        tarifa_mes = i.get('tarifa_mes')
+
+                        # 🔍 Búsqueda robusta: por ID o por (Ubicación + Número)
+                        slot_obj = None
+                        try:
+                            slot_obj = SlotDigital.objects.get(id=slot_id)
+                        except (SlotDigital.DoesNotExist, ValueError, TypeError):
+                            slot_obj = SlotDigital.objects.filter(ubicacion_id=ubi_id_s, numero_slot=slot_num).first()
+
+                        if not slot_obj:
+                            continue
+
+                        t_minima = slot_obj.tarifa_minima
+                        if Decimal(str(tarifa_mes)) < t_minima:
+                            requiere_aprobacion = 1
+                            estado_nota = 6
+                            enviar_correo = 1
+                            messages.error(request, "⚠️ Esta nota de pedido requiere autorización.")
+                    except Exception as e:
+                        print(f"Error en validación de slot digital: {e}")
 
             if requiere_aprobacion:
                 # 2️⃣ Crear la nota
@@ -320,16 +334,28 @@ def nuevo_pedido(request):
                 for u in ocupaciones:
                     try:
                         slot_id = u.get('slot_id')
+                        ubi_id = u.get('ubicacion_id')
+                        slot_num = u.get('slot')
                         fecha_inicio = u.get('fecha_inicio')
                         fecha_fin = u.get('fecha_fin')
                         tarifa_del_dia = u.get('tarifa_dia')
                         tarifa_mes = u.get('tarifa_mes')
                         tarifa_total = u.get('monto_total')
 
-                        if not (slot_id and fecha_inicio and fecha_fin):
+                        if not (fecha_inicio and fecha_fin):
                             continue
 
-                        slot = SlotDigital.objects.get(id=slot_id)
+                        # 🔍 Búsqueda robusta: por ID o por (Ubicación + Número)
+                        slot = None
+                        try:
+                            slot = SlotDigital.objects.get(id=slot_id)
+                        except (SlotDigital.DoesNotExist, ValueError, TypeError):
+                            slot = SlotDigital.objects.filter(ubicacion_id=ubi_id, numero_slot=slot_num).first()
+
+                        if not slot:
+                            print(f"❌ No se encontró el slot ID:{slot_id} / Num:{slot_num} en Ubi:{ubi_id}")
+                            continue
+
                         fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
                         fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
 
@@ -339,6 +365,8 @@ def nuevo_pedido(request):
                         ReservaSlot.objects.create(
                             slot=slot,
                             nota_pedido=nota,
+                            ubicacion_id = ubi_id,
+                            numero_slot = slot_num,
                             fecha_inicio=fecha_inicio,
                             fecha_fin=fecha_fin,
                             dias=dias,
@@ -587,10 +615,7 @@ def generar_pdf_nota(request, nota_id):
     nombre_cliente_pdf = nota.cliente.nombre_comercial
     correo_admin_pdf = nota.razon_social.correo
     correo_contac_pdf = nota.cliente.correo_contacto
-    try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-    except locale.Error:
-        locale.setlocale(locale.LC_TIME, 'C')
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
     now = datetime.now()
     mes_letra = now.strftime("%B")
 
@@ -605,7 +630,8 @@ def generar_pdf_nota(request, nota_id):
             'estado_nombre': getattr(r.estado, 'nombre', str(r.estado_id)),
             'tarifa_dia':r.tarifa_dia,
             'tarifa_mes':r.tarifa_mes,
-            'total_tarifa_digital':r.total_tarifa_slot
+            'total_tarifa_digital':r.total_tarifa_slot, 
+            'numero_slot': r.numero_slot
         })
 
     logo_path = os.path.join(settings.BASE_DIR, "lima_visual", "static", "logo.png")
@@ -1017,10 +1043,7 @@ def detalle_aprobar_negar_np(request, nota_id):
     nombre_cliente_pdf = nota.cliente.nombre_comercial
     correo_admin_pdf = nota.razon_social.correo
     correo_contac_pdf = nota.cliente.correo_contacto
-    try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-    except locale.Error:
-        locale.setlocale(locale.LC_TIME, 'C')
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
     now = datetime.now()
     mes_letra = now.strftime("%B")
 

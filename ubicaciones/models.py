@@ -50,6 +50,8 @@ class SlotDigital(models.Model):
 class ReservaSlot(models.Model):
     slot = models.ForeignKey('ubicaciones.SlotDigital', on_delete=models.CASCADE, related_name='reservas')
     nota_pedido = models.ForeignKey('pedidos.NotaPedido', on_delete=models.CASCADE, related_name='reservas_nota')
+    ubicacion_id = models.IntegerField(default=0)
+    numero_slot = models.IntegerField(default=0)
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     dias = models.PositiveIntegerField(default=0)
