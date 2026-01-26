@@ -1088,7 +1088,7 @@
         <input type="date" class="border border-gray-300 rounded-lg px-2 py-1 text-sm fecha-fin" placeholder="Fin">
         <input type="number" step="0.01" class="border border-gray-300 rounded-lg px-2 py-1 text-sm tarifa-mes text-right" placeholder="Tarifa/mes">
         <span class="msg-disponibilidad-digital text-xs ml-2"></span>
-        <button type="button" class="text-red-600 hover:text-red-800" onclick="this.parentElement.remove()">🗑️</button>
+        <button type="button" class="text-red-600 hover:text-red-800" onclick="eliminarFilaDigital(this)">🗑️</button>
     `;
 
             container.appendChild(div);
@@ -1531,6 +1531,43 @@
             const btnDigital = document.getElementById("btn-digital");
             btnDigital.disabled = false;
 
+            // 🔄 Función centralizada para validar el estado del botón
+            window.validarEstadoBotonDigital = function() {
+                const todasLasFilas = document.querySelectorAll(".fila-slot");
+                let hayErrores = false;
+                
+                todasLasFilas.forEach(fila => {
+                    const fechaInicio = fila.querySelector(".fecha-inicio");
+                    const fechaFin = fila.querySelector(".fecha-fin");
+                    
+                    if (fechaInicio && fechaFin) {
+                        const fi = fechaInicio.value;
+                        const ff = fechaFin.value;
+                        
+                        // Si hay fechas y la fecha fin es menor que la inicio, hay error
+                        if (fi && ff && ff < fi) {
+                            hayErrores = true;
+                        }
+                        
+                        // Si el fondo es rojo (error de validación), hay error
+                        if (fila.style.backgroundColor === "rgb(255, 230, 230)") {
+                            hayErrores = true;
+                        }
+                    }
+                });
+                
+                btnDigital.disabled = hayErrores;
+                console.log(`🔍 Estado botón digital: ${hayErrores ? 'DESHABILITADO' : 'HABILITADO'}`);
+            };
+
+            // 🗑️ Función para eliminar fila y re-validar
+            window.eliminarFilaDigital = function(boton) {
+                const fila = boton.parentElement;
+                fila.remove();
+                console.log("🗑️ Fila eliminada, re-validando estado del botón...");
+                validarEstadoBotonDigital();
+            };
+
             function agregarValidacionFila(fila) {
                 const slotId = fila.dataset.slotId;
                 const numeroSlot = fila.dataset.slotNumero;
@@ -1555,7 +1592,10 @@
                     }
                     fila.style.backgroundColor = "";
 
-                    if (!fi || !ff) return;
+                    if (!fi || !ff) {
+                        validarEstadoBotonDigital();
+                        return;
+                    }
 
                     btnDigital.disabled = true;
 
@@ -1581,7 +1621,7 @@
                         if (data.ok) {
                             if (mensaje) mensaje.style.color = "green";
                             fila.style.backgroundColor = "#e6ffe6";
-                            btnDigital.disabled = false;
+                            validarEstadoBotonDigital();
                         } else {
                             if (mensaje) mensaje.style.color = "red";
                             fila.style.backgroundColor = "#ffe6e6";
@@ -1594,6 +1634,7 @@
                             mensaje.style.color = "red";
                         }
                         fila.style.backgroundColor = "#fff0f0";
+                        btnDigital.disabled = true;
                     }
                 };
 
