@@ -631,7 +631,7 @@ def generar_pdf_nota(request, nota_id):
             'fecha_fin': r.fecha_fin,
             'dias': r.dias,
             'estado_nombre': getattr(r.estado, 'nombre', str(r.estado_id)),
-            'tarifa_dia':r.tarifa_dia,
+            'tarifa_dia': f"{int(r.tarifa_dia * 100) / 100:.2f}",
             'tarifa_mes':r.tarifa_mes,
             'total_tarifa_digital':r.total_tarifa_slot, 
             'numero_slot': r.numero_slot
