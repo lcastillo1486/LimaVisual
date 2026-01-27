@@ -42,19 +42,24 @@ def crear_cliente(request):
     listado_ejecutivos = User.objects.all().order_by('first_name')
 
     if request.method == 'POST':
-        clientes.objects.create(
-            razon_social=request.POST['razon_social'],
-            nombre_comercial=request.POST.get('nombre_comercial', ''),
-            ruc=request.POST['ruc'],
-            telefono=request.POST['telefono'],
-            correo=request.POST.get('correo', ''),
-            contacto=request.POST.get('contacto', ''),
-            direccion=request.POST.get('direccion', ''),
-            correo_contacto = request.POST.get('correo_contacto'),
-            usuario_id=request.POST.get('usuario') or None
-        )
-        messages.success(request, "Cliente creado correctamente.")
-        return redirect('crear_cliente')
+        ruc=request.POST['ruc']
+        if not clientes.objects.filter(ruc = ruc).exists():
+            clientes.objects.create(
+                razon_social=request.POST['razon_social'],
+                nombre_comercial=request.POST.get('nombre_comercial', ''),
+                ruc=request.POST['ruc'],
+                telefono=request.POST['telefono'],
+                correo=request.POST.get('correo', ''),
+                contacto=request.POST.get('contacto', ''),
+                direccion=request.POST.get('direccion', ''),
+                correo_contacto = request.POST.get('correo_contacto'),
+                usuario_id=request.POST.get('usuario') or None
+            )
+            messages.success(request, "Cliente creado correctamente.")
+            return redirect('crear_cliente')
+        else:
+            messages.error(request, "Este RUC ya se encuentra registrado en el sistema. Por favor verifiquelo.")
+            return redirect('crear_cliente')
     
     return render(request, 'clientes.html',{'listado_ejecutivos':listado_ejecutivos})
 
