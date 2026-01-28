@@ -50,7 +50,7 @@ def logear(request):
                         primer_login = True
                     )
 
-                    notas_list = NotaPedido.objects.filter(usuario__username = nombre_usuario)
+                    notas_list = NotaPedido.objects.filter(usuario__username = nombre_usuario, estado_id = 1)
                     dias = 2
                     for n in notas_list:
                         fecha_nota = n.fecha
