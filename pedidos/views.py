@@ -418,7 +418,7 @@ def nuevo_pedido(request):
 
             if enviar_correo:
                 asunto = "⚠️ Verificación requerida: Nota de pedido inferior al monto minimo establecido" 
-                link = "www.youtube.com"
+                link = "https://limavisual.onrender.com/"
                 mensaje = f"""
 Estimado/a,
 
@@ -440,7 +440,7 @@ Sistema de Gestión de Pedidos"""
         asunto,
         mensaje,
         settings.EMAIL_HOST_USER,
-        ['aleyluis1486@gmail.com'],
+        ['a.perales@limavisual.pe', 'administracion@limavisual.pe'],
         fail_silently=False,
     )
             
@@ -823,6 +823,35 @@ def cambiar_estado_nota(request):
         nota = get_object_or_404(NotaPedido, id=nota_id)
         if nuevo_estado:
 
+            if nuevo_estado == 3:
+                numero_nota = NotaPedido.ob
+                asunto = "✅ Nota de pedido aprobada"
+                link = "https://limavisual.onrender.com/"
+                mensaje = f"""
+Estimado/a,
+
+Le informamos que la nota de pedido que se encontraba pendiente de verificación ha sido aprobada exitosamente y continuará con el flujo normal de gestión.
+
+Detalles del pedido:
+- Número de nota: {numero_nota}
+- solicitante = {request.user.first_name} {request.user.last_name}"
+
+Puede revisar la información y el estado actualizado de la nota en el sistema a través del siguiente enlace:
+{link}
+
+Gracias por su atención.
+
+Atentamente,
+Sistema de Gestión de Pedidos"""
+                 
+                send_mail(
+        asunto,
+        mensaje,
+        settings.EMAIL_HOST_USER,
+        ['soporte@limavisual.pe'],
+        fail_silently=False,
+    )
+
             # ACTUALIZAR EL ESTADO DE LA NOTA ###
             nota.estado_id = nuevo_estado
             nota.motivo_rechazo_anulacion = motivo_anulacion
@@ -1165,7 +1194,7 @@ def aprobar_nota(request, nota_id):
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
     asunto = "✅ Nota de Pedido aprobada." 
-    link = "www.youtube.com"
+    link = "https://limavisual.onrender.com"
     mensaje = f"""
 
 Estimado/a,
@@ -1207,7 +1236,7 @@ def rechazar_nota(request, nota_id):
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
     asunto = "❌ Nota de Pedido rechazada." 
-    link = "www.youtube.com"
+    link = "https://limavisual.onrender.com/"
     mensaje = f"""
 
 Estimado/a,
