@@ -193,7 +193,16 @@
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M16.862 3.487a2.112 2.112 0 113 2.987L7.5 18.937l-4 1 1-4 12.362-12.45z" />
                         </svg>
-                    </a> -->
+                    </a> -->   
+                    
+                    <a href="{% url 'editar_fechas_montos' item.id %}" title="Editar Fechas y Montos"
+                                        class="inline-flex items-center justify-center w-7 h-7 text-yellow-600 hover:text-white hover:bg-yellow-600 rounded-full transition-all duration-200 shadow-sm cursor-pointer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M16.862 3.487a2.112 2.112 0 113 2.987L7.5 18.937l-4 1 1-4 12.362-12.45z" />
+                                        </svg>
+                                    </a>
 
                                     <button title="Cambiar Estado"
                                         onclick="abrirModalEstado('{{ item.id }}', '{{ item.estado }}')"

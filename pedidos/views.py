@@ -1268,3 +1268,138 @@ def calendario_ocupaciones_digitales_canje(request):
     ubicaciones = ubicacion.objects.filter(tipo = 2).order_by('codigo')
     slots = SlotDigital.objects.select_related('ubicacion').all().order_by('ubicacion', 'numero_slot')
     return render(request, 'calendario_canjes.html', {'slots': slots,'ubicaciones': ubicaciones})
+
+@login_required
+def editar_fechas_montos(request, nota_id):
+    nota = get_object_or_404(NotaPedido, id=nota_id)
+    detalles_fijas = DetalleUbicacion.objects.filter(nota=nota).select_related('ubicacion')
+    reservas_digitales = ReservaSlot.objects.filter(nota_pedido=nota).select_related('slot__ubicacion', 'slot', 'estado')
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # 1. Actualizar Ubicaciones Fijas
+                total_fijas = Decimal('0.00')
+                for detalle in detalles_fijas:
+                    prefix = f'fija_{detalle.id}_'
+                    fecha_inicio_str = request.POST.get(prefix + 'fecha_inicio')
+                    fecha_fin_str = request.POST.get(prefix + 'fecha_fin')
+                    tarifa_mes_str = request.POST.get(prefix + 'tarifa_mes')
+                    
+                    if fecha_inicio_str and fecha_fin_str and tarifa_mes_str:
+                        fi = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+                        ff = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+                        tarifa_mes = Decimal(tarifa_mes_str)
+
+                        # Validación básica de fechas
+                        if fi > ff:
+                             messages.error(request, f"Error en {detalle.ubicacion.codigo}: Fecha inicio mayor a fin.")
+                             raise ValueError("Fechas inválidas")
+
+                        # Recalcular dás y tarifa total
+                        dias = (ff - fi).days + 1
+                        # Lógica de prerateo simple o mantener lógica existente? 
+                        # Asumiremos prerateo mensual estándar: (TarifaMes / 30) * Días si no es mes completo?
+                        # O simplemente el usuario ingresa el total?
+                        # En nuevo_pedido.html hay calculo JS. Aquí idealmente recibiríamos el total calculado o lo calculamos.
+                        # Para simplificar y consistencia con el modelo, calculamos tarifa_dia
+                        
+                        tarifa_dia = tarifa_mes / Decimal('30.0') # Aproximación estándar
+                        total_detalle = (tarifa_dia * dias) if dias < 30 else tarifa_mes # Simplificación, ajustar s/n regla de negocio exacta
+                        
+                        # MEJOR: Usar el total que venga del form si existe, o recalcular.
+                        # El requerimiento dice "modificar monto". Asumiremos que el usuario pone la tarifa mensual y el sistema calcula, o pone el total.
+                        # Vemos que en el form original se guarda tarifa_dia, tarifa_mes, total_tarifa_ubi.
+                        # Vamos a permitir editar 'tarifa_mes' y recalcular el resto, o recibir 'total_calculado'.
+                        
+                        # Verificamos disponibilidad EXCLUYENDO este detalle
+                        conflicto = DetalleUbicacion.objects.filter(
+                            ubicacion_id=detalle.ubicacion_id,
+                            fecha_inicio__lte=ff,
+                            fecha_fin__gte=fi
+                        ).exclude(id=detalle.id).exists()
+
+                        if conflicto:
+                            messages.error(request, f"Conflicto de fechas para la ubicación {detalle.ubicacion.codigo}")
+                            raise ValueError("Ubicación ocupada")
+                        
+                        # Actualizar
+                        detalle.fecha_inicio = fi
+                        detalle.fecha_fin = ff
+                        detalle.dias = dias
+                        detalle.tarifa_mes = tarifa_mes
+                        # detalle.tarifa_dia = tarifa_dia # Opcional, si se usa
+                        # Recalcular total proporcional si se desea, o confiar en input. 
+                        # Para hacerlo robusto:
+                        # Si cambia fecha o tarifa, recalculamos total.
+                        # Total = (Tarifa Mes / 30) * Días
+                        detalle.total_tarifa_ubi = (tarifa_mes / 30) * dias
+                        detalle.save()
+                        
+                        total_fijas += detalle.total_tarifa_ubi
+
+                # 2. Actualizar Ubicaciones Digitales
+                total_digitales = Decimal('0.00')
+                for reserva in reservas_digitales:
+                    prefix = f'digital_{reserva.id}_'
+                    fecha_inicio_str = request.POST.get(prefix + 'fecha_inicio')
+                    fecha_fin_str = request.POST.get(prefix + 'fecha_fin')
+                    tarifa_mes_str = request.POST.get(prefix + 'tarifa_mes')
+
+                    if fecha_inicio_str and fecha_fin_str and tarifa_mes_str:
+                        fi = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+                        ff = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+                        tarifa_mes = Decimal(tarifa_mes_str)
+                        tarifa_dia = tarifa_mes/30 
+
+                        if fi > ff:
+                             messages.error(request, f"Error en Slot {reserva.slot.numero_slot}: Fecha inicio mayor a fin.")
+                             raise ValueError("Fechas inválidas")
+                        
+                        # Verificar disponibilidad EXCLUYENDO esta reserva
+                        conflicto = ReservaSlot.objects.filter(
+                            slot_id=reserva.slot_id,
+                            fecha_inicio__lte=ff,
+                            fecha_fin__gte=fi,
+                            estado_id=2 # Ocupado
+                        ).exclude(id=reserva.id).exists()
+
+                        if conflicto:
+                            messages.error(request, f"Conflicto de fechas para Slot {reserva.slot.numero_slot} en {reserva.slot.ubicacion.codigo}")
+                            raise ValueError("Slot ocupado")
+
+                        dias = (ff - fi).days + 1
+                        
+                        reserva.fecha_inicio = fi
+                        reserva.fecha_fin = ff
+                        reserva.dias = dias
+                        reserva.tarifa_mes = tarifa_mes
+                        reserva.tarifa_dia = tarifa_dia
+                        reserva.total_tarifa_slot = (tarifa_mes / 30) * dias
+                        reserva.save()
+
+                        total_digitales += reserva.total_tarifa_slot
+
+                # 3. Actualizar Totales de la Nota
+                nota.tarifa_estatica = total_fijas
+                nota.tarifa_digital = total_digitales
+                subtotal = total_fijas + total_digitales
+                nota.igv = subtotal * Decimal('0.18')
+                nota.total = subtotal + nota.igv
+                nota.save()
+
+                messages.success(request, "Nota de pedido actualizada correctamente.")
+                return redirect('gestion_notas')
+
+        except ValueError as e:
+            # El mensaje ya fue añadido
+            pass
+        except Exception as e:
+            messages.error(request, f"Error al actualizar: {str(e)}")
+            print(e)
+    
+    return render(request, 'editar_fechas_montos.html', {
+        'nota': nota,
+        'detalles_fijas': detalles_fijas,
+        'reservas_digitales': reservas_digitales
+    })

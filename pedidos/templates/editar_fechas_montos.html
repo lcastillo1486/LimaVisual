@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div class="max-w-7xl mx-auto bg-white p-10 mt-12 shadow-2xl rounded-2xl animate-fade-in-up border border-gray-200">
+        
+        <!-- Header -->
+        <div class="mb-4 p-4 bg-gray-800 border border-black rounded-xl shadow-sm flex items-center justify-between"
+             style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
+            <h2 class="text-2xl font-extrabold text-white tracking-tight">Editar Fechas y Montos</h2>
+            <div class="text-white text-right text-sm">
+                <p>Nota: <strong>{{ nota.numero_np }}</strong></p>
+                <p>Cliente: {{ nota.cliente.nombre_comercial }}</p>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for message in messages %}
+            <div class="p-3 rounded-lg text-white {% if message.tags == 'success' %}bg-green-500{% else %}bg-red-500{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- SECCIÓN UBICACIONES FIJAS -->
+            {% if detalles_fijas %}
+            <div class="mb-6 p-6 bg-gray-50 border border-gray-300 rounded-2xl shadow-md">
+                <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Ubicaciones Estáticas</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-gray-800 text-white">
+                            <tr>
+                                <th class="px-3 py-2">Código</th>
+                                <th class="px-3 py-2">Dirección</th>
+                                <th class="px-3 py-2 text-center">Inicio Actual</th>
+                                <th class="px-3 py-2 text-center">Fin Actual</th>
+                                <th class="px-3 py-2 text-center">Tarifa/Mes (S/)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for detalle in detalles_fijas %}
+                            <tr class="hover:bg-gray-100">
+                                <td class="px-3 py-2 font-medium">{{ detalle.ubicacion.codigo }}</td>
+                                <td class="px-3 py-2 text-gray-600">{{ detalle.ubicacion.direccion }}</td>
+                                <td class="px-2 py-2">
+                                    <input type="date" name="fija_{{ detalle.id }}_fecha_inicio" 
+                                           value="{{ detalle.fecha_inicio|date:'Y-m-d' }}" required
+                                           class="w-full border border-gray-300 rounded px-2 py-1 text-center">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="date" name="fija_{{ detalle.id }}_fecha_fin" 
+                                           value="{{ detalle.fecha_fin|date:'Y-m-d' }}" required
+                                           class="w-full border border-gray-300 rounded px-2 py-1 text-center">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="number" step="0.01" name="fija_{{ detalle.id }}_tarifa_mes" 
+                                           value="{{ detalle.tarifa_mes|stringformat:'0.2f' }}" required
+                                           class="w-32 border border-blue-300 text-blue-900 font-bold rounded px-2 py-1 text-right bg-blue-50">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- SECCIÓN UBICACIONES DIGITALES -->
+            {% if reservas_digitales %}
+            <div class="mb-6 p-6 bg-gray-50 border border-gray-300 rounded-2xl shadow-md">
+                <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Ubicaciones Digitales</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-gray-800 text-white">
+                            <tr>
+                                <th class="px-3 py-2">Ubicación</th>
+                                <th class="px-3 py-2 text-center">Slot</th>
+                                <th class="px-3 py-2 text-center">Inicio Actual</th>
+                                <th class="px-3 py-2 text-center">Fin Actual</th>
+                                <th class="px-3 py-2 text-center">Tarifa/Mes (S/)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for reserva in reservas_digitales %}
+                            <tr class="hover:bg-gray-100">
+                                <td class="px-3 py-2 font-medium">
+                                    {{ reserva.slot.ubicacion.codigo }}
+                                    <div class="text-xs text-gray-500">{{ reserva.slot.ubicacion.direccion }}</div>
+                                </td>
+                                <td class="px-3 py-2 text-center font-bold">{{ reserva.slot.numero_slot }}</td>
+                                <td class="px-2 py-2">
+                                    <input type="date" name="digital_{{ reserva.id }}_fecha_inicio" 
+                                           value="{{ reserva.fecha_inicio|date:'Y-m-d' }}" required
+                                           class="w-full border border-gray-300 rounded px-2 py-1 text-center">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="date" name="digital_{{ reserva.id }}_fecha_fin" 
+                                           value="{{ reserva.fecha_fin|date:'Y-m-d' }}" required
+                                           class="w-full border border-gray-300 rounded px-2 py-1 text-center">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="number" step="0.01" name="digital_{{ reserva.id }}_tarifa_mes" 
+                                           value="{{ reserva.tarifa_mes|stringformat:'0.2f' }}" required
+                                           class="w-32 border border-blue-300 text-blue-900 font-bold rounded px-2 py-1 text-right bg-blue-50">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not detalles_fijas and not reservas_digitales %}
+            <div class="p-4 mb-4 text-center text-gray-500 bg-gray-100 rounded-lg">
+                Esta nota no tiene ubicaciones asociadas para editar.
+            </div>
+            {% endif %}
+
+            <div class="mt-8 text-right space-x-4">
+                <a href="{% url 'gestion_notas' %}" class="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition">Cancelar</a>
+                <button type="submit" 
+                        onclick="return confirm('¿Estás seguro de guardar los cambios? Esto recalculará los totales de la nota.')"
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-bold shadow-lg">
+                    Guardar Cambios
+                </button>
+            </div>
+
+        </form>
+    </div>
+</body>
+{% endblock %}
+</html>
