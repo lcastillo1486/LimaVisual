@@ -822,9 +822,8 @@ def cambiar_estado_nota(request):
         motivo_anulacion = request.POST.get("motivo_anulacion")
         nota = get_object_or_404(NotaPedido, id=nota_id)
         if nuevo_estado:
-
-            if nuevo_estado == 3:
-                numero_nota = NotaPedido.ob
+            if int(nuevo_estado) == 3:
+                numero_nota = NotaPedido.objects.get(pk = nota_id).numero_np
                 asunto = "✅ Nota de pedido aprobada"
                 link = "https://limavisual.onrender.com/"
                 mensaje = f"""
