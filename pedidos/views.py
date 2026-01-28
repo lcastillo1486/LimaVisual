@@ -1092,7 +1092,10 @@ def detalle_aprobar_negar_np(request, nota_id):
     nombre_cliente_pdf = nota.cliente.nombre_comercial
     correo_admin_pdf = nota.razon_social.correo
     correo_contac_pdf = nota.cliente.correo_contacto
-    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except locale.Error:
+        locale.setlocale(locale.LC_TIME, 'C')
     now = datetime.now()
     mes_letra = now.strftime("%B")
 
