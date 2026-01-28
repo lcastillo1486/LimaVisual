@@ -2165,6 +2165,35 @@
             console.log("🟩 Resultado final select.value =", select.value);
         });
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const tipoVentaSelect = document.getElementById("tipo_venta");
+        // Específico para las filas de selección masiva en 'nuevo_pedido.html'
+        const filasSlots = document.querySelectorAll(".slot-masivo-row");
+        function aplicarFiltroMasivo() {
+            const tipoSeleccionado = tipoVentaSelect.value;
+            filasSlots.forEach(fila => {
+                // Obtenemos si es canje desde el dataset (data-es-canje="true" o "false")
+                const esCanje = fila.dataset.esCanje === "true";
+                if (!tipoSeleccionado) {
+                    // Si no se seleccionó ningún tipo, mostrar todo
+                    fila.style.display = "";
+                } else if (tipoSeleccionado === "2") {
+                    // Tipo venta 2 (Canje) → mostrar solo slots de canje
+                    fila.style.display = esCanje ? "" : "none";
+                } else {
+                    // Otros tipos → mostrar solo los que NO son de canje
+                    fila.style.display = !esCanje ? "" : "none";
+                }
+            });
+        }
+        if (tipoVentaSelect) {
+            tipoVentaSelect.addEventListener("change", aplicarFiltroMasivo);
+            // Ejecutar al cargar para aplicar el estado inicial
+            aplicarFiltroMasivo();
+        }
+    });
+</script>
 </body>
 {% endblock %}
 
