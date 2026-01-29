@@ -880,9 +880,11 @@
 
                         // 💰 Calcular monto proporcional
                         if (tarifaMes > 0) {
-                            const tarifaDia = tarifaMes / 30;
-                            tarifaPorDia = tarifaMes / 30;
-                            montoTotal = (tarifaDia * diasDif).toFixed(2);
+                            const tarifaPorDia = tarifaMes / 30;
+                            const montoTotal = ((tarifaMes * diasDif) / 30).toFixed(2);
+                            // const tarifaDia = tarifaMes / 30;
+                            // tarifaPorDia = tarifaMes / 30;
+                            // montoTotal = (tarifaDia * diasDif).toFixed(2);
                         }
                     }
                 }
@@ -1474,7 +1476,9 @@
 
                     const tarifa = parseFloat(r.tarifa) || 0;
                     const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
-                    const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
+                    const monto_total = tarifa > 0 && dias > 0 ? ((tarifa * dias) / 30).toFixed(2) : "0.00";
+                    // const tarifa_diaria = tarifa > 0 ? (tarifa / 30).toFixed(2) : "0.00";
+                    // const monto_total = tarifa > 0 && dias > 0 ? (tarifa_diaria * dias).toFixed(2) : "0.00";
 
                     listaOcupaciones.push({
                         ubicacion_id: String(item.ubicacion_id),
@@ -1543,8 +1547,10 @@
                         const ff = new Date(rango.fin);
                         let d = (!isNaN(fi) && !isNaN(ff)) ? Math.ceil((ff - fi) / 86400000) + 1 : 0;
                         let t = parseFloat(rango.tarifa).toFixed(2);
+                        // let td = (t / 30).toFixed(2);
+                        // let mt = (td * d).toFixed(2);
                         let td = (t / 30).toFixed(2);
-                        let mt = (td * d).toFixed(2);
+                        let mt = ((t * d) / 30).toFixed(2);
 
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
