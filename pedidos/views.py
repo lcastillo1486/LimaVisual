@@ -994,85 +994,318 @@ def dashboard_data(request):
 
 
 def dashboard(request):
+    """Dashboard gerencial con métricas avanzadas y análisis comparativo"""
+    from datetime import timedelta
+    from dateutil.relativedelta import relativedelta
+    
     today = date.today()
+    
+    # --- Filtros de fecha ---
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    
+    # Si no hay filtros, usar todo el histórico
+    notas_filtradas = NotaPedido.objects.all()
+    if fecha_inicio and fecha_fin:
+        notas_filtradas = notas_filtradas.filter(fecha__range=[fecha_inicio, fecha_fin])
+        periodo_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+        periodo_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+    else:
+        # Por defecto: últimos 12 meses
+        periodo_inicio = today - relativedelta(months=12)
+        periodo_fin = today
+        notas_filtradas = notas_filtradas.filter(fecha__gte=periodo_inicio)
+    
+    # --- MÉTRICAS FINANCIERAS PRINCIPALES ---
+    total_notas = notas_filtradas.count()
+    total_negociado_estatica = notas_filtradas.aggregate(total=Sum('tarifa_estatica'))['total'] or Decimal('0.00')
+    total_negociado_dinamica = notas_filtradas.aggregate(total=Sum('tarifa_digital'))['total'] or Decimal('0.00')
+    total_negociado = total_negociado_dinamica + total_negociado_estatica
+    # Desglose por estado
+    monto_aprobadas = notas_filtradas.filter(estado=3).aggregate(t=Sum('total'))['t'] or Decimal('0.00')
+    monto_pendientes = notas_filtradas.filter(estado=1).aggregate(t=Sum('total'))['t'] or Decimal('0.00')
+    monto_anuladas = notas_filtradas.filter(estado=2).aggregate(t=Sum('total'))['t'] or Decimal('0.00')
+    
+    total_pendientes = notas_filtradas.filter(estado=1).count()
+    total_anuladas = notas_filtradas.filter(estado=2).count()
+    total_aprobadas = notas_filtradas.filter(estado=3).count()
+    total_rechazadas = notas_filtradas.filter(estado=4).count()
+    total_completadas = notas_filtradas.filter(estado=5).count()
+    total_pendiente_autorizacion = notas_filtradas.filter(estado=6).count()
+    total_caducadas = notas_filtradas.filter(estado=7).count()
+    
+    
+    
+    # IGV y totales
+    igv_total = total_negociado * Decimal('0.18')
+    total_con_igv = total_negociado * Decimal('1.18')
+    
+    # Ticket promedio
+    ticket_promedio = (total_negociado / total_notas) if total_notas > 0 else Decimal('0.00')
+    
+    # --- ANÁLISIS COMPARATIVO (MES ACTUAL VS MES ANTERIOR) ---
+    mes_actual_inicio = today.replace(day=1)
+    mes_anterior_inicio = (mes_actual_inicio - relativedelta(months=1))
+    mes_anterior_fin = mes_actual_inicio - timedelta(days=1)
+    
+    # debe ser el bruto - sin igv 
+    ingresos_mes_actual = NotaPedido.objects.filter(
+        fecha__gte=mes_actual_inicio,
+        fecha__lte=today
+    ).aggregate(total=Sum('total'))['total'] or Decimal('0.00') 
 
-    # --- Totales generales ---
-    total_notas = NotaPedido.objects.count()
-    total_negociado = NotaPedido.objects.aggregate(total=Sum('total'))['total'] or Decimal('0.00')
-    monto_aprobadas = NotaPedido.objects.filter(estado = 1).aggregate(t=Sum('total'))['t'] or Decimal('0.00')
-    monto_anuladas = NotaPedido.objects.filter(estado = 2).aggregate(t=Sum('total'))['t'] or Decimal('0.00')
-    total_clientes = clientes.objects.count()
+    ingresos_mes_actual = ingresos_mes_actual/Decimal(1.18)
+    
+    ingresos_mes_anterior = NotaPedido.objects.filter(
+        fecha__gte=mes_anterior_inicio,
+        fecha__lte=mes_anterior_fin
+    ).aggregate(total=Sum('total'))['total'] or Decimal('0.00')
 
-    # --- Distribución de estados ---
-    total_aprobadas = NotaPedido.objects.filter(estado = 3).count()
-    total_pendientes = NotaPedido.objects.filter(estado = 1).count()
-    total_anuladas = NotaPedido.objects.filter(estado = 2).count()
+    ingresos_mes_anterior = ingresos_mes_anterior/Decimal(1.18)
+    
+    # Calcular cambio porcentual
+    if ingresos_mes_anterior > 0:
+        cambio_mensual = ((ingresos_mes_actual - ingresos_mes_anterior) / ingresos_mes_anterior * 100)
+    else:
+        cambio_mensual = 100 if ingresos_mes_actual > 0 else 0
+    
+    # --- ANÁLISIS POR TIPO DE VENTA ---
+    ventas_por_tipo = list(
+        notas_filtradas.values('tipo_venta__descripcion')
+        .annotate(
+            cantidad=Count('id'),
+            monto=Sum('total')/Decimal(1.18)
+        )
+        .order_by('-monto')
+    )
+    
+    # Preparar datos para gráfico de tipos de venta
+    tipo_venta_labels = [v['tipo_venta__descripcion'] or 'Sin tipo' for v in ventas_por_tipo]
+    tipo_venta_values = [float(v['monto']) for v in ventas_por_tipo]
+    
+    # --- ANÁLISIS POR TIPO DE PAGO ---
+    ventas_por_pago = list(
+        notas_filtradas.values('tipo_pago__descripcion')
+        .annotate(
+            cantidad=Count('id'),
+            monto=Sum('total')/Decimal(1.18)
+        )
+        .order_by('-monto')
+    )
+    
+    # Preparar datos para gráfico de tipos de pago
+    tipo_pago_labels = [v['tipo_pago__descripcion'] or 'Sin tipo' for v in ventas_por_pago]
+    tipo_pago_values = [float(v['monto']) for v in ventas_por_pago]
+    
+    # --- OCUPACIÓN DE UBICACIONES ---
+    # Ubicaciones fijas ocupadas (DetalleUbicacion activos)
+    ubicaciones_fijas_ocupadas = DetalleUbicacion.objects.filter(
+        fecha_fin__gte=today,
+        estado_id=2  # Asumiendo 2=Ocupado, 3=Aprobado
+    ).values('pk').distinct().count()
 
+    print(ubicaciones_fijas_ocupadas)
+    
+    # Slots digitales ocupados (ReservaSlot activos)
+    slots_digitales_ocupados = ReservaSlot.objects.filter(
+        fecha_fin__gte=today,
+        estado_id=2
+    ).values('pk').distinct().count()
+    
+    total_ubicaciones = ubicacion.objects.filter(tipo_id = 1).count()
+    total_slots = SlotDigital.objects.filter(activo=True).count()
+    
+    # Porcentaje de ocupación general
+    total_espacios = total_ubicaciones
+    total_espacios_slot = total_slots
+    espacios_ocupados = ubicaciones_fijas_ocupadas
+    espacios_ocupados_slots = slots_digitales_ocupados
+    porcentaje_ocupacion = round((espacios_ocupados / total_espacios * 100), 2) if total_espacios > 0 else 0
+    porcentaje_ocupacion_slot = round((espacios_ocupados_slots / total_espacios_slot * 100), 2) if total_espacios_slot > 0 else 0
+    
+    # --- TOP UBICACIONES POR RENTABILIDAD ---
+    # Ubicaciones fijas
+    top_ubicaciones_fijas = list(
+        DetalleUbicacion.objects.filter(nota__in=notas_filtradas)
+        .values('ubicacion__codigo', 'ubicacion__direccion')
+        .annotate(
+            total_ingresos=Sum('total_tarifa_ubi'),
+            veces_usada=Count('id')
+        )
+        .order_by('-total_ingresos')[:10]
+    )
+    
+    # Slots digitales
+    top_slots_digitales = list(
+        ReservaSlot.objects.filter(nota_pedido__in=notas_filtradas)
+        .values('slot__ubicacion__codigo', 'slot__numero_slot')
+        .annotate(
+            total_ingresos=Sum('total_tarifa_slot'),
+            veces_usada=Count('id')
+        )
+        .order_by('-total_ingresos')[:10]
+    )
+    
+    # --- TOP CLIENTES ---
+    top_clientes = list(
+        notas_filtradas.values('cliente__nombre_comercial', 'cliente__razon_social')
+        .annotate(
+            total=Sum('total')/Decimal(1.18),
+            cantidad_notas=Count('id')
+        )
+        .order_by('-total')[:10]
+    )
+    
+    # --- RENDIMIENTO POR VENDEDOR ---
+    rendimiento_vendedores = list(
+        notas_filtradas.values('usuario__first_name', 'usuario__last_name', 'usuario__username')
+        .annotate(
+            total_vendido=Sum('total')/Decimal(1.18),
+            cantidad_notas=Count('id'),
+            notas_aprobadas=Count('id', filter=Q(estado=3)),
+            ticket_promedio=Avg('total')
+        )
+        .order_by('-total_vendido')
+    )
+    
+    # --- INGRESOS MENSUALES (ÚLTIMOS 12 MESES) ---
+    meses = OrderedDict()
+    for i in range(11, -1, -1):  # De más antiguo a más reciente
+        fecha_mes = today - relativedelta(months=i)
+        key = f"{fecha_mes.year}-{fecha_mes.month:02d}"
+        meses[key] = Decimal('0.00')
+    
+    registros_mensuales = (
+        NotaPedido.objects.filter(fecha__gte=today - relativedelta(months=12))
+        .annotate(mes=TruncMonth('fecha'))
+        .values('mes')
+        .annotate(total=Sum('total'))
+        .order_by('mes')
+    )
+    
+    for r in registros_mensuales:
+        key = f"{r['mes'].year}-{r['mes'].month:02d}"
+        if key in meses:
+            meses[key] = r['total']/Decimal(1.18) or Decimal('0.00')
+    
+    chart_labels = list(meses.keys())
+    chart_values = [f"{v:.2f}" for v in meses.values()] 
+    print(chart_labels)
+
+    
+    # --- DISTRIBUCIÓN DE ESTADOS ---
     estado_dist = {
         'Aprobadas': total_aprobadas,
         'Pendientes': total_pendientes,
-        'Anuladas': total_anuladas
+        'Anuladas': total_anuladas,
+        'Rechazadas':total_rechazadas, 
+        'Completadas':total_completadas, 
+        'Pendiente Autorizacion':total_pendiente_autorizacion, 
+        'Caducadas': total_caducadas 
     }
+    
+    # --- KPIs ADICIONALES ---
+    tasa_aprobacion = round((total_aprobadas / total_notas * 100), 2) if total_notas > 0 else 0
+    tasa_conversion = tasa_aprobacion  # Alias
+    
+    # Clientes únicos
+    total_clientes = clientes.objects.count()
+    clientes_activos = notas_filtradas.values('cliente').distinct().count()
+    
+    # Días promedio de contratación estaticas 
+    dias_promedio = DetalleUbicacion.objects.filter(
+        nota__in=notas_filtradas
+    ).aggregate(promedio=Avg('dias'))['promedio'] or 0
 
-    # --- IGV y totales ---
-    igv_total = total_negociado * Decimal('0.18')
-    total_con_igv = total_negociado * Decimal('1.18')
+    # Días promedio de contratación dinamicas
 
-    # --- Ingresos mensuales últimos 12 meses ---
-    meses = OrderedDict()
-    for i in range(12):
-        m = (today.month - i - 1) % 12 + 1
-        y = today.year + ((today.month - i - 1) // 12)
-        meses[f"{y}-{m:02d}"] = Decimal('0.00')
-
-    registros = NotaPedido.objects.annotate(mes=TruncMonth('fecha')).values('mes').annotate(total=Sum('total')).order_by('mes')
-    for r in registros:
-        key = f"{r['mes'].year}-{r['mes'].month:02d}"
-        if key in meses:
-            meses[key] = r['total'] or Decimal('0.00')
-
-    chart_labels = list(meses.keys())
-    chart_values = [float(v) for v in meses.values()]
-
-    # --- Ocupación ---
-    total_ubicaciones = ubicacion.objects.count()
-    ocupadas = ubicacion.objects.filter(activa=True).count() if hasattr(ubicacion, 'activa') else 0
-    porcentaje_ocupacion = round((ocupadas / total_ubicaciones * 100), 2) if total_ubicaciones else 0
-
-    # --- Top rankings ---
-    top_clientes = list(
-        NotaPedido.objects.values('cliente__nombre_comercial')
-        .annotate(total=Sum('total'))
-        .order_by('-total')[:5]
+    dias_promedio_slot = ReservaSlot.objects.filter(
+        nota_pedido_id__in=notas_filtradas
+    ).aggregate(promedio=Avg('dias'))['promedio'] or 0
+    
+    # Total de días contratados debe sumar 
+    total_dias_contratados = (
+        DetalleUbicacion.objects.filter(nota__in=notas_filtradas)
+        .aggregate(total=Sum('dias'))['total'] or 0
     )
-    # top_ubicaciones = list(
-    #     ubicacion.objects.annotate(cnt=Count('notapedido')).values('codigo', 'cnt').order_by('-cnt')[:5]
-    # )
 
-    # --- KPI comerciales adicionales ---
-    tasa_aprobacion = round((total_aprobadas / total_notas * 100), 2) if total_notas else 0
-    notas_pendientes = total_pendientes
-    notas_anuladas = total_anuladas
+    total_dias_contratados_slot = (
+        ReservaSlot.objects.filter(nota_pedido_id__in=notas_filtradas)
+        .aggregate(total=Sum('dias'))['total'] or 0
+    )
 
+    total_dias_contratados = total_dias_contratados + total_dias_contratados_slot
+    
+    # --- CONTEXTO PARA TEMPLATE ---
     context = {
+
+        # Filtros
+        'fecha_inicio': fecha_inicio or periodo_inicio.strftime('%Y-%m-%d'),
+        'fecha_fin': fecha_fin or periodo_fin.strftime('%Y-%m-%d'),
+        
+        # Métricas principales
         'total_notas': total_notas,
         'total_negociado': total_negociado,
-        'monto_aprobadas': monto_aprobadas,
-        'monto_anuladas': monto_anuladas,
-        'total_clientes': total_clientes,
-        'igv_total': igv_total,
         'total_con_igv': total_con_igv,
-        'porcentaje_ocupacion': porcentaje_ocupacion,
+        'igv_total': igv_total,
+        'ticket_promedio': ticket_promedio,
+        
+        # Métricas por estado
+        'monto_aprobadas': monto_aprobadas,
+        'monto_pendientes': monto_pendientes,
+        'monto_anuladas': monto_anuladas,
+        'total_aprobadas': total_aprobadas,
+        'total_pendientes': total_pendientes,
+        'total_anuladas': total_anuladas,
+        'total_caducadas':total_caducadas,
+        'total_pendiente':total_pendientes,
+        'total_rechazadas':total_rechazadas, 
+        'total_completadas':total_completadas, 
+        'total_pendiente_autorizacion':total_pendiente_autorizacion, 
+        
+        # Análisis comparativo
+        'ingresos_mes_actual': ingresos_mes_actual,
+        'ingresos_mes_anterior': ingresos_mes_anterior,
+        'cambio_mensual': round(cambio_mensual, 2),
+        'cambio_positivo': cambio_mensual >= 0,
+        
+        # KPIs operacionales
         'tasa_aprobacion': tasa_aprobacion,
+        'tasa_conversion': tasa_conversion,
+        'porcentaje_ocupacion': porcentaje_ocupacion,
+        'porcentaje_ocupacion_slot':porcentaje_ocupacion_slot,
+        'ubicaciones_fijas_ocupadas': ubicaciones_fijas_ocupadas,
+        'slots_digitales_ocupados': slots_digitales_ocupados,
+        'total_ubicaciones': total_ubicaciones,
+        'total_slots': total_slots,
+        'dias_promedio': round(dias_promedio, 1),
+        'dias_promedio_slot': round(dias_promedio_slot, 1),
+        'total_dias_contratados': total_dias_contratados,
+        
+        # Clientes
+        'total_clientes': total_clientes,
+        'clientes_activos': clientes_activos,
+        
+        # Distribución
         'estado_dist': estado_dist,
+        
+        # Gráficos
         'chart_labels': json.dumps(chart_labels),
         'chart_values': json.dumps(chart_values),
+        'tipo_venta_labels': json.dumps(tipo_venta_labels),
+        'tipo_venta_values': json.dumps(tipo_venta_values),
+        'tipo_pago_labels': json.dumps(tipo_pago_labels),
+        'tipo_pago_values': json.dumps(tipo_pago_values),
+        
+        # Rankings y tablas
         'top_clientes': top_clientes,
-        # 'top_ubicaciones': top_ubicaciones,
-        'notas_pendientes': notas_pendientes,
-        'notas_anuladas': notas_anuladas
+        'top_ubicaciones_fijas': top_ubicaciones_fijas,
+        'top_slots_digitales': top_slots_digitales,
+        'rendimiento_vendedores': rendimiento_vendedores,
+        'ventas_por_tipo': ventas_por_tipo,
+        'ventas_por_pago': ventas_por_pago,
     }
-
+    
     return render(request, 'dashboard.html', context)
 
 def aprobar_negar_np(request):
