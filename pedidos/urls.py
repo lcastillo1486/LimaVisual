@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import nuevo_pedido, obtener_ocupaciones_fijas, calendario_ocupaciones_fijas, obtener_ocupaciones_digitales, calendario_ocupaciones_digitales, generar_pdf_nota, verificar_disponibilidad, verificar_disponibilidad_digital, gestion_notas, generar_pdf_nota, cambiar_estado_nota, filtrar_notas, ver_dashboard, dashboard_data, dashboard, aprobar_negar_np, filtrar_notas_n_autoriza, detalle_aprobar_negar_np, aprobar_nota, rechazar_nota, calendario_ocupaciones_digitales_canje, editar_fechas_montos
+from .views import nuevo_pedido, obtener_ocupaciones_fijas, calendario_ocupaciones_fijas, obtener_ocupaciones_digitales, calendario_ocupaciones_digitales, generar_pdf_nota, verificar_disponibilidad, verificar_disponibilidad_digital, gestion_notas, generar_pdf_nota, cambiar_estado_nota, filtrar_notas, ver_dashboard, dashboard_data, dashboard, aprobar_negar_np, filtrar_notas_n_autoriza, detalle_aprobar_negar_np, aprobar_nota, rechazar_nota, calendario_ocupaciones_digitales_canje, editar_fechas_montos, reporte_mensual_excel
 
 urlpatterns = [
     path('crear/pedido/',nuevo_pedido, name='crear_pedido'),
@@ -23,4 +23,5 @@ urlpatterns = [
     path('aprobar-np/<int:nota_id>/', aprobar_nota, name='aprobacion'),
     path('rechazar-np/<int:nota_id>/', rechazar_nota, name='rechazo'),
     path('editar_fechas_montos/<int:nota_id>/', editar_fechas_montos, name='editar_fechas_montos'),
+    path('reporte/mensual/excel/', reporte_mensual_excel, name='reporte_mensual_excel'),
 ]

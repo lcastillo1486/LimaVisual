@@ -34,6 +34,8 @@ from django.db.models.functions import TruncMonth
 from collections import OrderedDict
 from decimal import Decimal
 from django.core.mail import send_mail
+from calendar import monthrange
+import pandas as pd
 
 # Create your views here.
 
@@ -1636,3 +1638,63 @@ def editar_fechas_montos(request, nota_id):
         'detalles_fijas': detalles_fijas,
         'reservas_digitales': reservas_digitales
     })
+
+def split_range_by_month(start_date, end_date, daily_rate):
+    if not start_date or not end_date: return []
+    daily_rate = Decimal(str(daily_rate))
+    splits = []
+    curr = start_date
+    while curr <= end_date:
+        last_day_of_month = date(curr.year, curr.month, monthrange(curr.year, curr.month)[1])
+        segment_end = min(end_date, last_day_of_month)
+        days_in_segment = (segment_end - curr).days + 1
+        splits.append({
+            'mes': curr.strftime('%B %Y'),
+            'dias': days_in_segment,
+            'monto': daily_rate * Decimal(str(days_in_segment)),
+            'tarifa_dia': daily_rate
+        })
+        curr = segment_end + timedelta(days=1)
+    return splits
+@login_required
+def reporte_mensual_excel(request):
+    notas = NotaPedido.objects.filter(estado_id__in=[3, 5]).select_related('cliente', 'tipo_venta')
+    data = []
+    for nota in notas:
+        # Fijas
+        fijas = DetalleUbicacion.objects.filter(nota=nota).select_related('ubicacion')
+        for f in fijas:
+            for s in split_range_by_month(f.fecha_inicio, f.fecha_fin, f.tarifa_dia):
+                data.append({
+                    'NP': nota.numero_np, 'Cliente': nota.cliente.nombre_comercial if nota.cliente else "N/A",
+                    'Anunciante': nota.anunciante or "N/A", 'Ubicación': f.ubicacion.codigo if f.ubicacion else "N/A",
+                    'Mes': s['mes'], 'Días en Mes': s['dias'], 
+                    'Monto Diario (S/)': s['tarifa_dia'],
+                    'Monto Soles (S/)': s['monto']
+                })
+        # Digitales
+        digitales = ReservaSlot.objects.filter(nota_pedido=nota).select_related('slot__ubicacion')
+        for d in digitales:
+            for s in split_range_by_month(d.fecha_inicio, d.fecha_fin, d.tarifa_dia):
+                data.append({
+                    'NP': nota.numero_np, 'Cliente': nota.cliente.nombre_comercial if nota.cliente else "N/A",
+                    'Anunciante': nota.anunciante or "N/A", 'Ubicación': f"{d.slot.ubicacion.codigo} - Slot {d.slot.numero_slot}",
+                    'Mes': s['mes'], 'Días en Mes': s['dias'], 
+                    'Monto Diario (S/)': s['tarifa_dia'],
+                    'Monto Soles (S/)': s['monto']
+                })
+    if not data:
+        messages.warning(request, "No hay datos para generar el reporte.")
+        return redirect('gestion_notas')
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Reporte Mensual')
+        worksheet = writer.sheets['Reporte Mensual']
+        for idx, col in enumerate(df.columns):
+            max_len = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.column_dimensions[chr(65 + idx)].width = max_len
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=Reporte_Mensual_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    return response
