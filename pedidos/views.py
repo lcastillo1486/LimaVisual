@@ -1641,6 +1641,11 @@ def editar_fechas_montos(request, nota_id):
 
 def split_range_by_month(start_date, end_date, daily_rate):
     if not start_date or not end_date: return []
+    meses_es = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    }
     daily_rate = Decimal(str(daily_rate))
     splits = []
     curr = start_date
@@ -1649,7 +1654,7 @@ def split_range_by_month(start_date, end_date, daily_rate):
         segment_end = min(end_date, last_day_of_month)
         days_in_segment = (segment_end - curr).days + 1
         splits.append({
-            'mes': curr.strftime('%B %Y'),
+            'mes': f"{meses_es[curr.month]} {curr.year}",
             'dias': days_in_segment,
             'monto': daily_rate * Decimal(str(days_in_segment)),
             'tarifa_dia': daily_rate
