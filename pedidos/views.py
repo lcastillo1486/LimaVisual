@@ -1639,67 +1639,180 @@ def editar_fechas_montos(request, nota_id):
         'reservas_digitales': reservas_digitales
     })
 
+# def split_range_by_month(start_date, end_date, daily_rate):
+#     if not start_date or not end_date: return []
+#     meses_es = {
+#         1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+#         5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+#         9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+#     }
+#     daily_rate = Decimal(str(daily_rate))
+#     splits = []
+#     curr = start_date
+#     while curr <= end_date:
+#         last_day_of_month = date(curr.year, curr.month, monthrange(curr.year, curr.month)[1])
+#         segment_end = min(end_date, last_day_of_month)
+#         days_in_segment = (segment_end - curr).days + 1
+#         splits.append({
+#             'mes': f"{meses_es[curr.month]} {curr.year}",
+#             'dias': days_in_segment,
+#             'monto': daily_rate * Decimal(str(days_in_segment)),
+#             'tarifa_dia': daily_rate
+#         })
+#         curr = segment_end + timedelta(days=1)
+#     return splits
 def split_range_by_month(start_date, end_date, daily_rate):
-    if not start_date or not end_date: return []
+    """
+    Splits a date range into months and calculates amount based on daily_rate.
+    Returns a list of dictionaries with month info.
+    """
+    if not start_date or not end_date:
+        return []
+    
     meses_es = {
         1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
         5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
         9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
     }
+    
     daily_rate = Decimal(str(daily_rate))
     splits = []
+    
     curr = start_date
     while curr <= end_date:
+        # Determine the last day of the current month
         last_day_of_month = date(curr.year, curr.month, monthrange(curr.year, curr.month)[1])
+        # The end of this segment is the earlier of the end_date or the end of the month
         segment_end = min(end_date, last_day_of_month)
+        
         days_in_segment = (segment_end - curr).days + 1
+        amount_in_segment = daily_rate * Decimal(str(days_in_segment))
+        
         splits.append({
             'mes': f"{meses_es[curr.month]} {curr.year}",
             'dias': days_in_segment,
-            'monto': daily_rate * Decimal(str(days_in_segment)),
-            'tarifa_dia': daily_rate
+            'monto': amount_in_segment,
+            'tarifa_dia': daily_rate,
+            'fecha_referencia': date(curr.year, curr.month, 1)
         })
+        
+        # Advance to the first day of the next month
         curr = segment_end + timedelta(days=1)
+        
     return splits
 @login_required
 def reporte_mensual_excel(request):
-    notas = NotaPedido.objects.filter(estado_id__in=[3, 5]).select_related('cliente', 'tipo_venta')
+    # Obtener parámetros de filtro
+    desde_str = request.GET.get('desde')  # Formato "YYYY-MM"
+    hasta_str = request.GET.get('hasta')  # Formato "YYYY-MM"
+    
+    filtro_desde = None
+    filtro_hasta = None
+    
+    if desde_str:
+        try:
+            filtro_desde = datetime.strptime(desde_str, "%Y-%m").date()
+        except ValueError:
+            pass
+            
+    if hasta_str:
+        try:
+            # Para el fin de mes, apuntamos al primer día del mes siguiente o fin del mes seleccionado
+            y, m = map(int, hasta_str.split('-'))
+            _, last_day = monthrange(y, m)
+            filtro_hasta = date(y, m, last_day)
+        except ValueError:
+            pass
+
+    # Notas de pedido aprobadas (3) o completadas (5)
+    notas = NotaPedido.objects.filter(estado_id__in=[3, 5]).select_related('cliente', 'tipo_venta', 'tipo_pago')
+    
     data = []
+    
     for nota in notas:
-        # Fijas
+        # 1. Procesar Ubicaciones Fijas
         fijas = DetalleUbicacion.objects.filter(nota=nota).select_related('ubicacion')
         for f in fijas:
-            for s in split_range_by_month(f.fecha_inicio, f.fecha_fin, f.tarifa_dia):
-                data.append({
-                    'NP': nota.numero_np, 'Cliente': nota.cliente.nombre_comercial if nota.cliente else "N/A",
-                    'Anunciante': nota.anunciante or "N/A", 'Ubicación': f.ubicacion.codigo if f.ubicacion else "N/A",
-                    'Mes': s['mes'], 'Días en Mes': s['dias'], 
-                    'Monto Diario (S/)': s['tarifa_dia'],
-                    'Monto Soles (S/)': s['monto']
-                })
-        # Digitales
+            splits = split_range_by_month(f.fecha_inicio, f.fecha_fin, f.tarifa_dia)
+            for s in splits:
+                # Filtrar por mes/año del split si hay filtros activos
+                split_date = s['fecha_referencia'] # Necesitamos añadir esto al split
+                
+                incluir = True
+                if filtro_desde and split_date < date(filtro_desde.year, filtro_desde.month, 1):
+                    incluir = False
+                if filtro_hasta and split_date > filtro_hasta:
+                    incluir = False
+                
+                if incluir:
+                    data.append({
+                        'NP': nota.numero_np,
+                        'Cliente': nota.cliente.nombre_comercial if nota.cliente else "N/A",
+                        'Anunciante': nota.anunciante or "N/A",
+                        'Tipo Venta': nota.tipo_venta.descripcion if nota.tipo_venta else "N/A",
+                        'Ubicación': f.ubicacion.codigo if f.ubicacion else "N/A",
+                        'Tipo': 'ESTATICA',
+                        'Mes': s['mes'],
+                        'Días en Mes': s['dias'],
+                        'Monto Diario (S/)': s['tarifa_dia'],
+                        'Monto Soles (S/)': s['monto'],
+                        'Rango Original': f"{f.fecha_inicio} a {f.fecha_fin}"
+                    })
+        
+        # 2. Procesar Reservas Digitales
         digitales = ReservaSlot.objects.filter(nota_pedido=nota).select_related('slot__ubicacion')
         for d in digitales:
-            for s in split_range_by_month(d.fecha_inicio, d.fecha_fin, d.tarifa_dia):
-                data.append({
-                    'NP': nota.numero_np, 'Cliente': nota.cliente.nombre_comercial if nota.cliente else "N/A",
-                    'Anunciante': nota.anunciante or "N/A", 'Ubicación': f"{d.slot.ubicacion.codigo} - Slot {d.slot.numero_slot}",
-                    'Mes': s['mes'], 'Días en Mes': s['dias'], 
-                    'Monto Diario (S/)': s['tarifa_dia'],
-                    'Monto Soles (S/)': s['monto']
-                })
+            splits = split_range_by_month(d.fecha_inicio, d.fecha_fin, d.tarifa_dia)
+            for s in splits:
+                split_date = s['fecha_referencia']
+                
+                incluir = True
+                if filtro_desde and split_date < date(filtro_desde.year, filtro_desde.month, 1):
+                    incluir = False
+                if filtro_hasta and split_date > filtro_hasta:
+                    incluir = False
+                
+                if incluir:
+                    data.append({
+                        'NP': nota.numero_np,
+                        'Cliente': nota.cliente.nombre_comercial if nota.cliente else "N/A",
+                        'Anunciante': nota.anunciante or "N/A",
+                        'Tipo Venta': nota.tipo_venta.descripcion if nota.tipo_venta else "N/A",
+                        'Ubicación': f"{d.slot.ubicacion.codigo} - Slot {d.slot.numero_slot}" if d.slot else "N/A",
+                        'Tipo': 'DIGITAL',
+                        'Mes': s['mes'],
+                        'Días en Mes': s['dias'],
+                        'Monto Diario (S/)': s['tarifa_dia'],
+                        'Monto Soles (S/)': s['monto'],
+                        'Rango Original': f"{d.fecha_inicio} a {d.fecha_fin}"
+                    })
+
     if not data:
         messages.warning(request, "No hay datos para generar el reporte.")
         return redirect('gestion_notas')
+
     df = pd.DataFrame(data)
+    
+    # Crear respuesta Excel
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Reporte Mensual')
+        
+        # Formatear columnas (opcional pero recomendado para "WOW")
+        workbook = writer.book
         worksheet = writer.sheets['Reporte Mensual']
+        
+        # Ajustar ancho de columnas
         for idx, col in enumerate(df.columns):
             max_len = max(df[col].astype(str).map(len).max(), len(col)) + 2
             worksheet.column_dimensions[chr(65 + idx)].width = max_len
+
     output.seek(0)
-    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename=Reporte_Mensual_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f"Reporte_Mensual_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    
     return response

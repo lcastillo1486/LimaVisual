@@ -116,10 +116,62 @@
                     </div>
                 </div>
 
-                <a href="{% url 'reporte_mensual_excel' %}" class="bg-green-600 hover:bg-green-700 text-white font-bold p-2.5 rounded-lg text-center mt-4 block">
-    Generar Reporte 
-</a>
+                <!-- FILTROS REPORTE EXCEL -->
+                <div class="mt-6 border-t border-gray-700 pt-4">
+                    <h3 class="text-sm font-semibold mb-3 text-gray-300 flex items-center gap-2">
+                        📊 Rango Reporte Mensual
+                    </h3>
+                    <div class="flex flex-col gap-2">
+                        <div
+                            class="flex items-center justify-between border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800">
+                            <label for="reporteDesde" class="text-gray-400 text-xs">Desde:</label>
+                            <input type="month" id="reporteDesde"
+                                class="bg-transparent outline-none text-gray-100 text-xs cursor-pointer">
+                        </div>
+                        <div
+                            class="flex items-center justify-between border border-gray-700 rounded-lg px-2 py-1.5 bg-gray-800">
+                            <label for="reporteHasta" class="text-gray-400 text-xs">Hasta:</label>
+                            <input type="month" id="reporteHasta"
+                                class="bg-transparent outline-none text-gray-100 text-xs cursor-pointer">
+                        </div>
+                    </div>
+                </div>
 
+                <!-- BOTON REPORTE -->
+                <div class="mt-4">
+                    <a id="btnReporteExcel" href="{% url 'reporte_mensual_excel' %}"
+                        class="flex items-center justify-center gap-2 w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md transition-all duration-200 transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Exportar Reporte Mensual
+                    </a>
+                </div>
+
+                <script>
+                    document.getElementById('reporteDesde').addEventListener('change', actualizarLinkExcel);
+                    document.getElementById('reporteHasta').addEventListener('change', actualizarLinkExcel);
+
+                    function actualizarLinkExcel() {
+                        const desde = document.getElementById('reporteDesde').value;
+                        const hasta = document.getElementById('reporteHasta').value;
+                        const btn = document.getElementById('btnReporteExcel');
+                        let url = "{% url 'reporte_mensual_excel' %}";
+
+                        const params = new URLSearchParams();
+                        if (desde) params.append('desde', desde);
+                        if (hasta) params.append('hasta', hasta);
+
+                        if (params.toString()) {
+                            url += '?' + params.toString();
+                        }
+                        btn.href = url;
+                    }
+                </script>
+
+            
             </aside>
 
             <!-- TABLA PRINCIPAL -->
