@@ -106,6 +106,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'lima_visual.wsgi.application'
 
+# 30 minutos por inactividad
+SESSION_COOKIE_AGE = 600 
+
+# Reinicia el contador en cada request (inactividad real)
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Cerrar sesión al cerrar el navegador
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
