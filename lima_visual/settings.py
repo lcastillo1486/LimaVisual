@@ -57,7 +57,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = 'notificaciones@backtrackelite.com'
-EMAIL_HOST_PASSWORD = 'Lima.2025'  
+EMAIL_HOST_PASSWORD = 'backtrack.2026'  
 
 
 # Application definition
