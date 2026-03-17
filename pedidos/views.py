@@ -1851,8 +1851,11 @@ def reporte_ubicacion_excel(request):
         if inter_inicio and inter_fin and inter_inicio <= inter_fin:
             splits = split_range_by_month(inter_inicio, inter_fin, f.tarifa_dia)
             for s in splits:
+                codigo_ubi = f.ubicacion.codigo if f.ubicacion else "N/A"
+                if codigo_ubi != "N/A":
+                    codigo_ubi += " (Estática)"
                 data.append({
-                    'Ubicación': f.ubicacion.codigo if f.ubicacion else "N/A",
+                    'Ubicación': codigo_ubi,
                     'Tipo Venta': f.nota.tipo_venta.descripcion if (f.nota and f.nota.tipo_venta) else "N/A",
                     'Mes/Año': f"{meses_es[s['fecha_referencia'].month]} {s['fecha_referencia'].year}",
                     'Monto_Num': s['monto'],
@@ -1867,6 +1870,9 @@ def reporte_ubicacion_excel(request):
             splits = split_range_by_month(inter_inicio, inter_fin, d.tarifa_dia)
             for s in splits:
                 codigo_ubi = f"{d.slot.ubicacion.codigo} - Slot {d.slot.numero_slot}" if (d.slot and d.slot.ubicacion) else "N/A"
+                if codigo_ubi != "N/A":
+                    codigo_ubi += " (Dinámica)"
+                    
                 data.append({
                     'Ubicación': codigo_ubi,
                     'Tipo Venta': d.nota_pedido.tipo_venta.descripcion if (d.nota_pedido and d.nota_pedido.tipo_venta) else "N/A",
