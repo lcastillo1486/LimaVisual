@@ -1816,3 +1816,107 @@ def reporte_mensual_excel(request):
     response['Content-Disposition'] = f'attachment; filename={filename}'
     
     return response
+
+@login_required
+def reporte_ubicacion_excel(request):
+    # Parámetros de filtro de rango de fecha exacto
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    if not fecha_inicio_str or not fecha_fin_str:
+        messages.warning(request, "Debe seleccionar un rango de fechas válido para este reporte.")
+        return redirect('gestion_notas')
+    try:
+        filtro_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
+        filtro_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+    except ValueError:
+        messages.warning(request, "Formato de fecha inválido.")
+        return redirect('gestion_notas')
+    if filtro_inicio > filtro_fin:
+        messages.warning(request, "La fecha de inicio no puede ser mayor a la fecha de fin.")
+        return redirect('gestion_notas')
+    # Solo procesar NP's Aprobadas (3) o Completadas (5)
+    notas = NotaPedido.objects.filter(estado_id__in=[3, 5]).select_related('tipo_venta')
+    data = []
+    
+    meses_es = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    }
+    # 1. Ubicaciones Estáticas
+    fijas = DetalleUbicacion.objects.filter(nota__in=notas).select_related('ubicacion', 'nota', 'nota__tipo_venta')
+    for f in fijas:
+        inter_inicio = max(f.fecha_inicio, filtro_inicio) if f.fecha_inicio else None
+        inter_fin = min(f.fecha_fin, filtro_fin) if f.fecha_fin else None
+        if inter_inicio and inter_fin and inter_inicio <= inter_fin:
+            splits = split_range_by_month(inter_inicio, inter_fin, f.tarifa_dia)
+            for s in splits:
+                data.append({
+                    'Ubicación': f.ubicacion.codigo if f.ubicacion else "N/A",
+                    'Tipo Venta': f.nota.tipo_venta.descripcion if (f.nota and f.nota.tipo_venta) else "N/A",
+                    'Mes/Año': f"{meses_es[s['fecha_referencia'].month]} {s['fecha_referencia'].year}",
+                    'Monto_Num': s['monto'],
+                    'Mes_Sort':  s['fecha_referencia']
+                })
+    # 2. Ubicaciones Digitales
+    digitales = ReservaSlot.objects.filter(nota_pedido__in=notas).select_related('slot__ubicacion', 'nota_pedido', 'nota_pedido__tipo_venta')
+    for d in digitales:
+        inter_inicio = max(d.fecha_inicio, filtro_inicio) if d.fecha_inicio else None
+        inter_fin = min(d.fecha_fin, filtro_fin) if d.fecha_fin else None
+        if inter_inicio and inter_fin and inter_inicio <= inter_fin:
+            splits = split_range_by_month(inter_inicio, inter_fin, d.tarifa_dia)
+            for s in splits:
+                codigo_ubi = f"{d.slot.ubicacion.codigo} - Slot {d.slot.numero_slot}" if (d.slot and d.slot.ubicacion) else "N/A"
+                data.append({
+                    'Ubicación': codigo_ubi,
+                    'Tipo Venta': d.nota_pedido.tipo_venta.descripcion if (d.nota_pedido and d.nota_pedido.tipo_venta) else "N/A",
+                    'Mes/Año': f"{meses_es[s['fecha_referencia'].month]} {s['fecha_referencia'].year}",
+                    'Monto_Num': s['monto'],
+                    'Mes_Sort':  s['fecha_referencia']
+                })
+    if not data:
+        messages.warning(request, "No se encontraron datos en el rango seleccionado.")
+        return redirect('gestion_notas')
+    df = pd.DataFrame(data)
+    df['Monto_Num'] = pd.to_numeric(df['Monto_Num'], errors='coerce').fillna(0)
+    # Agrupar y pivotear
+    df_grouped = df.groupby(['Ubicación', 'Mes_Sort', 'Mes/Año', 'Tipo Venta'])['Monto_Num'].sum().reset_index()
+    df_pivot = df_grouped.pivot_table(
+        index=['Ubicación', 'Mes_Sort', 'Mes/Año'],
+        columns='Tipo Venta',
+        values='Monto_Num',
+        aggfunc='sum',
+        fill_value=0
+    ).reset_index()
+    
+    df_pivot = df_pivot.sort_values(by=['Ubicación', 'Mes_Sort'])
+    df_pivot = df_pivot.drop(columns=['Mes_Sort'])
+    ventas_cols = [c for c in df_pivot.columns if c not in ['Ubicación', 'Mes/Año']]
+    df_pivot['Total'] = df_pivot[ventas_cols].sum(axis=1)
+    df_pivot.columns.name = None
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_pivot.to_excel(writer, index=False, sheet_name='Por Ubicacion y Venta')
+        
+        workbook = writer.book
+        worksheet = writer.sheets['Por Ubicacion y Venta']
+        from openpyxl.styles import numbers
+        
+        for idx, col in enumerate(df_pivot.columns):
+            max_len = max(df_pivot[col].astype(str).map(len).max(), len(str(col))) + 2
+            col_letter = chr(65 + idx)
+            worksheet.column_dimensions[col_letter].width = max_len
+            
+            if col in ventas_cols or col == 'Total':
+                for row in range(2, len(df_pivot) + 2):
+                    cell = worksheet[f"{col_letter}{row}"]
+                    cell.number_format = 'S/ #,##0.00'
+    output.seek(0)
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f"Reporte_Ubicaciones_{filtro_inicio}_a_{filtro_fin}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    
+    return response
