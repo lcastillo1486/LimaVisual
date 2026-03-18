@@ -1926,3 +1926,176 @@ def reporte_ubicacion_excel(request):
     response['Content-Disposition'] = f'attachment; filename={filename}'
     
     return response
+
+def exportar_dashboard_excel(request):
+    """
+    Genera un archivo Excel desde cero usando Pandas.
+    Crea la hoja de Datos consolidados y además agrega hojas de resumen 
+    por Ubicación, por Slot Específico, por Mes y por Tipo de Venta.
+    """
+    import io
+    import pandas as pd
+    from datetime import date
+    from django.http import HttpResponse
+    from decimal import Decimal
+    
+    try:
+        # Filtros de Fecha
+        fecha_inicio = request.GET.get('fecha_inicio')
+        fecha_fin = request.GET.get('fecha_fin')
+        
+        notas_validas = NotaPedido.objects.exclude(estado_id=2) # Excluir anuladas
+        if fecha_inicio and fecha_fin:
+            notas_validas = notas_validas.filter(fecha__range=[fecha_inicio, fecha_fin])
+            
+        data_consolidada = {}
+        
+        # 1. Obtener ubicaciones FIJAS
+        fijas = DetalleUbicacion.objects.filter(nota__in=notas_validas).select_related('ubicacion', 'nota', 'nota__tipo_venta')
+        for det in fijas:
+            ubi = det.ubicacion
+            if not ubi: continue
+            
+            tipo_venta = det.nota.tipo_venta.descripcion.upper() if det.nota.tipo_venta else 'DESCONOCIDO'
+            fecha_act = det.fecha_inicio
+            
+            if not fecha_act: continue
+            
+            codigo_full = ubi.codigo or "SIN CODIGO"
+            codigo_base = codigo_full.split("-")[0].strip() if "-" in codigo_full else codigo_full
+            
+            mes_anio = f"{fecha_act.year}-{fecha_act.month:02d}"
+            llave_agrupacion = f"{codigo_full}|{mes_anio}"
+            
+            if llave_agrupacion not in data_consolidada:
+                data_consolidada[llave_agrupacion] = {
+                    'Ubicación': codigo_full,
+                    'Ubicación Base': codigo_base,
+                    'Mes/Año': mes_anio,
+                    'AGENCIA (S/)': Decimal('0.0'),
+                    'CANJE (S/)': Decimal('0.0'),
+                    'DIRECTO (S/)': Decimal('0.0'),
+                }
+                
+            monto = det.total_tarifa_ubi or Decimal('0.0')
+            
+            if 'AGENCIA' in tipo_venta:
+                data_consolidada[llave_agrupacion]['AGENCIA (S/)'] += monto
+            elif 'CANJE' in tipo_venta:
+                data_consolidada[llave_agrupacion]['CANJE (S/)'] += monto
+            else:
+                data_consolidada[llave_agrupacion]['DIRECTO (S/)'] += monto
+        # 2. Obtener ubicaciones DIGITALES (Slots)
+        digitales = ReservaSlot.objects.filter(nota_pedido__in=notas_validas).select_related('slot__ubicacion', 'nota_pedido', 'nota_pedido__tipo_venta')
+        for res in digitales:
+            slot = res.slot
+            if not slot or not slot.ubicacion: continue
+            
+            tipo_venta = res.nota_pedido.tipo_venta.descripcion.upper() if res.nota_pedido.tipo_venta else 'DESCONOCIDO'
+            fecha_act = res.fecha_inicio
+            
+            if not fecha_act: continue
+            
+            codigo_base = slot.ubicacion.codigo or "SIN CODIGO"
+            codigo_full = f"{codigo_base} - Slot {slot.numero_slot}"
+            codigo_base = codigo_base.strip()
+            
+            mes_anio = f"{fecha_act.year}-{fecha_act.month:02d}"
+            llave_agrupacion = f"{codigo_full}|{mes_anio}"
+            
+            if llave_agrupacion not in data_consolidada:
+                data_consolidada[llave_agrupacion] = {
+                    'Ubicación': codigo_full,
+                    'Ubicación Base': codigo_base,
+                    'Mes/Año': mes_anio,
+                    'AGENCIA (S/)': Decimal('0.0'),
+                    'CANJE (S/)': Decimal('0.0'),
+                    'DIRECTO (S/)': Decimal('0.0'),
+                }
+                
+            monto = res.total_tarifa_slot or Decimal('0.0')
+            
+            if 'AGENCIA' in tipo_venta:
+                data_consolidada[llave_agrupacion]['AGENCIA (S/)'] += monto
+            elif 'CANJE' in tipo_venta:
+                data_consolidada[llave_agrupacion]['CANJE (S/)'] += monto
+            else:
+                data_consolidada[llave_agrupacion]['DIRECTO (S/)'] += monto
+                
+        # ===============================
+        # Creación de DataFrames usando Pandas
+        # ===============================
+        df_data = []
+        for key in sorted(data_consolidada.keys()):
+            row_data = data_consolidada[key]
+            # Convertimos a float para manejar números correctamente
+            row_data['AGENCIA (S/)'] = float(row_data['AGENCIA (S/)'])
+            row_data['CANJE (S/)'] = float(row_data['CANJE (S/)'])
+            row_data['DIRECTO (S/)'] = float(row_data['DIRECTO (S/)'])
+            row_data['TOTAL (S/)'] = row_data['AGENCIA (S/)'] + row_data['CANJE (S/)'] + row_data['DIRECTO (S/)']
+            df_data.append(row_data)
+            
+        df = pd.DataFrame(df_data)
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            if not df.empty:
+                # 1. Hoja principal de Datos
+                df.to_excel(writer, sheet_name='📋 Datos', index=False)
+                
+                # 2. Resumen por Ubicación Base
+                resumen_ubi = df.groupby('Ubicación Base')[['AGENCIA (S/)', 'CANJE (S/)', 'DIRECTO (S/)', 'TOTAL (S/)']].sum().reset_index()
+                resumen_ubi = resumen_ubi.sort_values(by='TOTAL (S/)', ascending=False)
+                resumen_ubi.to_excel(writer, sheet_name='📍 Por Ubicación', index=False)
+                
+                # 2.5 Resumen por Ubicación y Slot (Detalle Específico)
+                resumen_detallado = df.groupby('Ubicación')[['AGENCIA (S/)', 'CANJE (S/)', 'DIRECTO (S/)', 'TOTAL (S/)']].sum().reset_index()
+                resumen_detallado = resumen_detallado.sort_values(by=['Ubicación', 'TOTAL (S/)'], ascending=[True, False])
+                resumen_detallado.to_excel(writer, sheet_name='🔍 Detalle por Slot', index=False)
+                
+                # 3. Resumen por Mes
+                resumen_mes = df.groupby('Mes/Año')[['AGENCIA (S/)', 'CANJE (S/)', 'DIRECTO (S/)', 'TOTAL (S/)']].sum().reset_index()
+                resumen_mes = resumen_mes.sort_values(by='Mes/Año', ascending=False)
+                resumen_mes.to_excel(writer, sheet_name='📅 Por Mes', index=False)
+                
+                # 4. Resumen por Tipo de Venta
+                tipo_venta_data = {
+                    'Tipo de Venta': ['AGENCIA', 'CANJE', 'DIRECTO'],
+                    'Total (S/)': [df['AGENCIA (S/)'].sum(), df['CANJE (S/)'].sum(), df['DIRECTO (S/)'].sum()]
+                }
+                resumen_tipo = pd.DataFrame(tipo_venta_data)
+                resumen_tipo = resumen_tipo.sort_values(by='Total (S/)', ascending=False)
+                resumen_tipo.to_excel(writer, sheet_name='💰 Por Tipo de Venta', index=False)
+                
+                # Ajustar ancho de columnas
+                for sheetname in writer.sheets:
+                    worksheet = writer.sheets[sheetname]
+                    for idx, col in enumerate(worksheet.columns):
+                        max_length = 0
+                        column_letter = col[0].column_letter
+                        for cell in col:
+                            try:
+                                if len(str(cell.value)) > max_length:
+                                    max_length = len(str(cell.value))
+                            except:
+                                pass
+                        adjusted_width = (max_length + 2)
+                        worksheet.column_dimensions[column_letter].width = adjusted_width
+            else:
+                pd.DataFrame(columns=['Ubicación', 'Ubicación Base', 'Mes/Año', 'AGENCIA (S/)', 'CANJE (S/)', 'DIRECTO (S/)', 'TOTAL (S/)']).to_excel(writer, sheet_name='📋 Datos', index=False)
+        output.seek(0)
+        file_data = output.read()
+            
+        response = HttpResponse(
+            file_data, 
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        nombre_descarga = f"Dashboard_Actualizado_{date.today().strftime('%Y%m%d')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename={nombre_descarga}'
+        
+        return response
+        
+    except Exception as e:
+        import traceback
+        error_msg = traceback.format_exc()
+        return HttpResponse(f"Error al generar el reporte: {str(e)}<br><pre>{error_msg}</pre>", status=500)
