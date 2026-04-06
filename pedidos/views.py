@@ -624,6 +624,7 @@ def generar_pdf_nota(request, nota_id):
     detalles_fijas = DetalleUbicacion.objects.filter(nota=nota).select_related('ubicacion')
     reservas_digitales = ReservaSlot.objects.filter(nota_pedido=nota).select_related('slot__ubicacion', 'estado')
 
+    responsable = nota.usuario.first_name + " " + nota.usuario.last_name
     nombre_cliente_pdf = nota.cliente.nombre_comercial
     correo_admin_pdf = nota.razon_social.correo
     correo_contac_pdf = nota.cliente.correo_contacto
@@ -670,7 +671,7 @@ def generar_pdf_nota(request, nota_id):
         'empresa_ruc': '20600801831',
         'logo_url': logo_base64,
         'now': datetime.now(),
-        'usuario': request.user,
+        'usuario': responsable,
         'total_tarifa_estaticas':total_estaticas,
         'total_tarifa_digital':total_digitales,
         'subtotal':subtotal,
