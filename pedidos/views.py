@@ -438,13 +438,13 @@ Gracias por su atención.
 Atentamente,
 Sistema de Gestión de Pedidos"""
                  
-                send_mail(
-        asunto,
-        mensaje,
-        settings.EMAIL_HOST_USER,
-        ['a.perales@limavisual.pe', 'administracion@limavisual.pe'],
-        fail_silently=False,
-    )
+    #             send_mail(
+    #     asunto,
+    #     mensaje,
+    #     settings.EMAIL_HOST_USER,
+    #     ['a.perales@limavisual.pe', 'administracion@limavisual.pe'],
+    #     fail_silently=False,
+    # )
             
         except Exception as e:
             print(f"Error en nuevo_pedido: {e}")
@@ -846,13 +846,13 @@ Gracias por su atención.
 Atentamente,
 Sistema de Gestión de Pedidos"""
                  
-                send_mail(
-        asunto,
-        mensaje,
-        settings.EMAIL_HOST_USER,
-        ['soporte@limavisual.pe'],
-        fail_silently=False,
-    )
+    #             send_mail(
+    #     asunto,
+    #     mensaje,
+    #     settings.EMAIL_HOST_USER,
+    #     ['soporte@limavisual.pe'],
+    #     fail_silently=False,
+    # )
 
             # ACTUALIZAR EL ESTADO DE LA NOTA ###
             nota.estado_id = nuevo_estado
@@ -1448,13 +1448,13 @@ Gracias por su atención.
 Atentamente,
 Sistema de Gestión de Pedidos"""
                  
-    send_mail(
-        asunto,
-        mensaje,
-        settings.EMAIL_HOST_USER,
-        [f'{correo}'],
-        fail_silently=False,
-    )
+    # send_mail(
+    #     asunto,
+    #     mensaje,
+    #     settings.EMAIL_HOST_USER,
+    #     [f'{correo}'],
+    #     fail_silently=False,
+    # )
 
     return redirect('autorizar')
 
@@ -1490,13 +1490,13 @@ Gracias por su atención.
 Atentamente,
 Sistema de Gestión de Pedidos"""
                  
-    send_mail(
-        asunto,
-        mensaje,
-        settings.EMAIL_HOST_USER,
-        [f'{correo}'],
-        fail_silently=False,
-    )
+    # send_mail(
+    #     asunto,
+    #     mensaje,
+    #     settings.EMAIL_HOST_USER,
+    #     [f'{correo}'],
+    #     fail_silently=False,
+    # )
 
     return redirect('autorizar')
 
