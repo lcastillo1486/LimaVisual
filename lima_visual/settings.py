@@ -47,6 +47,10 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
+
+DEFAULT_FROM_EMAIL = "notificaciones@backtrackelite.com"
+
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:    
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
