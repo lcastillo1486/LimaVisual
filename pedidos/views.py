@@ -36,6 +36,8 @@ from decimal import Decimal
 from django.core.mail import send_mail
 from calendar import monthrange
 import pandas as pd
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 # Create your views here.
 
@@ -419,24 +421,74 @@ def nuevo_pedido(request):
                 return redirect(f"{reverse('crear_pedido')}?abrir_pdf={pdf_url}")
 
             if enviar_correo:
-                asunto = "⚠️ Verificación requerida: Nota de pedido inferior al monto minimo establecido" 
+                asunto = "Verificación requerida: Nota de pedido inferior al monto minimo establecido" 
                 link = "https://limavisual.onrender.com/"
                 mensaje = f"""
-Estimado/a,
+<html>
+<body style="font-family: Arial, sans-serif; color: #333;">
 
-Se ha registrado una nota de pedido inferior al monto mínimo establecido para negociación.
-Por tal motivo, se requiere su verificación y aprobación o rechazo antes de proceder con la gestión correspondiente.
+<p>Estimado/a,</p>
 
-Detalles del pedido:
-- Número de nota: {numero_nota}
-- solicitante = {request.user.first_name} {request.user.last_name}"
+<p>
+Se ha registrado una nota de pedido por un monto inferior al mínimo establecido para negociación.
+Por tal motivo, se requiere su verificación y posterior aprobación o rechazo antes de continuar con la gestión correspondiente.
+</p>
 
-Por favor, revise la información y realice la acción correspondiente en el sistema ({link}) (Aprobar / Rechazar) a la brevedad posible para no afectar el flujo operativo.
+<h3 style="color: #2c3e50;">Detalles del pedido:</h3>
+<ul>
+    <li><strong>Número de nota:</strong> {numero_nota}</li>
+    <li><strong>Solicitante:</strong> {request.user.first_name} {request.user.last_name}</li>
+</ul>
 
-Gracias por su atención.
+<p>
+Por favor, revise la información y realice la acción correspondiente en el sistema:
+</p>
 
-Atentamente,
-Sistema de Gestión de Pedidos""" 
+<p>
+<a href="{link}" style="background-color: #f0ad4e; color: #ffffff; padding: 10px 15px; text-decoration: none; border-radius: 5px;">
+    Revisar pedido
+</a>
+</p>
+
+<p>
+(Aprobar / Rechazar) a la brevedad posible para no afectar el flujo operativo.
+</p>
+
+<p>Gracias por su atención.</p>
+
+<p>
+Atentamente,<br>
+<strong>Sistema de Gestión de Pedidos</strong>
+</p>
+
+</body>
+</html>
+"""
+                configuration = sib_api_v3_sdk.Configuration()
+                configuration.api_key['api-key'] = settings.BREVO_API_KEY
+
+                api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+                )
+
+                email = sib_api_v3_sdk.SendSmtpEmail(
+                to = [
+                {"email": "a.perales@limavisual.pe"},
+                {"email": "administracion@limavisual.pe"}
+                ],
+                sender={
+                    "email": settings.DEFAULT_FROM_EMAIL,
+                    "name": "Notificación - No Reply"
+                },
+                subject="Verificación requerida: Nota de pedido inferior al monto minimo establecido",
+                html_content=f'{mensaje}'
+            )
+
+            try:
+                response = api_instance.send_transac_email(email)
+                print("Correo enviado:", response)
+            except ApiException as e:
+                print("Error enviando correo:", e)
                  
     #             send_mail(
     #     asunto,
@@ -827,24 +879,62 @@ def cambiar_estado_nota(request):
         if nuevo_estado:
             if int(nuevo_estado) == 3:
                 numero_nota = NotaPedido.objects.get(pk = nota_id).numero_np
-                asunto = "✅ Nota de pedido aprobada"
+                asunto = "Nota de pedido aprobada"
                 link = "https://limavisual.onrender.com/"
                 mensaje = f"""
-Estimado/a,
+<html>
+<body style="font-family: Arial, sans-serif;">
 
-Le informamos que la nota de pedido que se encontraba pendiente de verificación ha sido aprobada exitosamente y continuará con el flujo normal de gestión.
+<p>Estimado/a,</p>
 
-Detalles del pedido:
-- Número de nota: {numero_nota}
-- solicitante = {request.user.first_name} {request.user.last_name}"
+<p>
+Le informamos que la nota de pedido ha sido aprobada exitosamente
+y continuará con el flujo normal de gestión.
+</p>
 
-Puede revisar la información y el estado actualizado de la nota en el sistema a través del siguiente enlace:
-{link}
+<h3>Detalles del pedido:</h3>
+<ul>
+    <li><b>Número de nota:</b> {numero_nota}</li>
+    <li><b>Solicitante:</b> {request.user.first_name} {request.user.last_name}</li>
+</ul>
 
-Gracias por su atención.
+<p>
+Puede revisar el estado aquí:<br>
+<a href="{link}">Ver pedido</a>
+</p>
 
-Atentamente,
-Sistema de Gestión de Pedidos"""
+<p>Gracias por su atención.</p>
+
+<p>
+Atentamente,<br>
+Sistema de Gestión de Pedidos
+</p>
+
+</body>
+</html>
+"""
+                configuration = sib_api_v3_sdk.Configuration()
+                configuration.api_key['api-key'] = settings.BREVO_API_KEY
+
+                api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+                )
+
+                email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": 'soporte@limavisual.pe'}],  # variable con el correo del cliente
+                sender={
+                    "email": settings.DEFAULT_FROM_EMAIL,
+                    "name": "Notificación - No Reply"
+                },
+                subject="Nota de pedido aprobada",
+                html_content=f'{mensaje}'
+            )
+
+            try:
+                response = api_instance.send_transac_email(email)
+                print("Correo enviado:", response)
+            except ApiException as e:
+                print("Error enviando correo:", e)
                  
     #             send_mail(
     #     asunto,
@@ -1431,22 +1521,60 @@ def aprobar_nota(request, nota_id):
 
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
-    asunto = "✅ Nota de Pedido aprobada." 
+    asunto = "Nota de Pedido aprobada." 
     link = "https://limavisual.onrender.com"
     mensaje = f"""
+<html>
+<body style="font-family: Arial, sans-serif; color: #333;">
 
-Estimado/a,
+<p>Estimado/a,</p>
 
-Su nota de pedido ha sido aprobada.
+<p>
+Nos complace informarle que su nota de pedido ha sido <strong>aprobada</strong> exitosamente.
+</p>
 
-Detalles del pedido:
-- Número de nota: {nota.numero_np}
-- Anunciante = {nota.cliente.nombre_comercial} 
+<h3 style="color: #2c3e50;">Detalles del pedido:</h3>
+<ul>
+    <li><strong>Número de nota:</strong> {nota.numero_np}</li>
+    <li><strong>Anunciante:</strong> {nota.cliente.nombre_comercial}</li>
+</ul>
 
-Gracias por su atención.
+<p>
+Puede continuar con el flujo normal de gestión dentro del sistema.
+</p>
 
-Atentamente,
-Sistema de Gestión de Pedidos"""
+<p>Gracias por su atención.</p>
+
+<p>
+Atentamente,<br>
+<strong>Sistema de Gestión de Pedidos</strong>
+</p>
+
+</body>
+</html>
+"""
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = settings.BREVO_API_KEY
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+                )
+
+    email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": correo}],  # variable con el correo del cliente
+                sender={
+                    "email": settings.DEFAULT_FROM_EMAIL,
+                    "name": "Notificación - No Reply"
+                },
+                subject="Nota de pedido aprobada",
+                html_content=f'{mensaje}'
+            )
+
+    try:
+                response = api_instance.send_transac_email(email)
+                print("Correo enviado:", response)
+    except ApiException as e:
+                print("Error enviando correo:", e)
                  
     # send_mail(
     #     asunto,
@@ -1473,22 +1601,62 @@ def rechazar_nota(request, nota_id):
 
     # ENVIAR EL CORREO DE VUELTA
     correo = nota.usuario.email
-    asunto = "❌ Nota de Pedido rechazada." 
+    asunto = "Nota de Pedido rechazada." 
     link = "https://limavisual.onrender.com/"
     mensaje = f"""
+<html>
+<body style="font-family: Arial, sans-serif; color: #333;">
 
-Estimado/a,
+<p>Estimado/a,</p>
 
-Su nota de pedido ha sido rechazada.
+<p>
+Le informamos que su nota de pedido ha sido 
+<strong style="color: #d9534f;">rechazada</strong>.
+</p>
 
-Detalles del pedido:
-- Número de nota: {nota.numero_np}
-- Anunciante = {nota.cliente.nombre_comercial} 
+<h3 style="color: #2c3e50;">Detalles del pedido:</h3>
+<ul>
+    <li><strong>Número de nota:</strong> {nota.numero_np}</li>
+    <li><strong>Anunciante:</strong> {nota.cliente.nombre_comercial}</li>
+</ul>
 
-Gracias por su atención.
+<p>
+Le recomendamos revisar la información ingresada y realizar las correcciones necesarias en el sistema.
+</p>
 
-Atentamente,
-Sistema de Gestión de Pedidos"""
+<p>Gracias por su atención.</p>
+
+<p>
+Atentamente,<br>
+<strong>Sistema de Gestión de Pedidos</strong>
+</p>
+
+</body>
+</html>
+"""
+    
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = settings.BREVO_API_KEY
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+                )
+
+    email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": correo}],  # variable con el correo del cliente
+                sender={
+                    "email": settings.DEFAULT_FROM_EMAIL,
+                    "name": "Notificación - No Reply"
+                },
+                subject="Nota de Pedido rechazada.",
+                html_content=f'{mensaje}'
+            )
+
+    try:
+                response = api_instance.send_transac_email(email)
+                print("Correo enviado:", response)
+    except ApiException as e:
+                print("Error enviando correo:", e)
                  
     # send_mail(
     #     asunto,
