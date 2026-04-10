@@ -436,7 +436,7 @@ Por favor, revise la información y realice la acción correspondiente en el sis
 Gracias por su atención.
 
 Atentamente,
-Sistema de Gestión de Pedidos"""
+Sistema de Gestión de Pedidos""" 
                  
     #             send_mail(
     #     asunto,
