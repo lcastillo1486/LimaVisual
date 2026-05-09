@@ -880,61 +880,61 @@ def cambiar_estado_nota(request):
             if int(nuevo_estado) == 3:
                 numero_nota = NotaPedido.objects.get(pk = nota_id).numero_np
                 asunto = "Nota de pedido aprobada"
-                link = "https://limavisual.onrender.com/"
-                mensaje = f"""
-<html>
-<body style="font-family: Arial, sans-serif;">
+#                 link = "https://limavisual.onrender.com/"
+#                 mensaje = f"""
+# <html>
+# <body style="font-family: Arial, sans-serif;">
 
-<p>Estimado/a,</p>
+# <p>Estimado/a,</p>
 
-<p>
-Le informamos que la nota de pedido ha sido aprobada exitosamente
-y continuará con el flujo normal de gestión.
-</p>
+# <p>
+# Le informamos que la nota de pedido ha sido aprobada exitosamente
+# y continuará con el flujo normal de gestión.
+# </p>
 
-<h3>Detalles del pedido:</h3>
-<ul>
-    <li><b>Número de nota:</b> {numero_nota}</li>
-    <li><b>Solicitante:</b> {request.user.first_name} {request.user.last_name}</li>
-</ul>
+# <h3>Detalles del pedido:</h3>
+# <ul>
+#     <li><b>Número de nota:</b> {numero_nota}</li>
+#     <li><b>Solicitante:</b> {request.user.first_name} {request.user.last_name}</li>
+# </ul>
 
-<p>
-Puede revisar el estado aquí:<br>
-<a href="{link}">Ver pedido</a>
-</p>
+# <p>
+# Puede revisar el estado aquí:<br>
+# <a href="{link}">Ver pedido</a>
+# </p>
 
-<p>Gracias por su atención.</p>
+# <p>Gracias por su atención.</p>
 
-<p>
-Atentamente,<br>
-Sistema de Gestión de Pedidos
-</p>
+# <p>
+# Atentamente,<br>
+# Sistema de Gestión de Pedidos
+# </p>
 
-</body>
-</html>
-"""
-                configuration = sib_api_v3_sdk.Configuration()
-                configuration.api_key['api-key'] = settings.BREVO_API_KEY
+# </body>
+# </html>
+# """
+#                 configuration = sib_api_v3_sdk.Configuration()
+#                 configuration.api_key['api-key'] = settings.BREVO_API_KEY
 
-                api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
-                sib_api_v3_sdk.ApiClient(configuration)
-                )
+#                 api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+#                 sib_api_v3_sdk.ApiClient(configuration)
+#                 )
 
-                email = sib_api_v3_sdk.SendSmtpEmail(
-                to=[{"email": 'soporte@limavisual.pe'}],  # variable con el correo del cliente
-                sender={
-                    "email": settings.DEFAULT_FROM_EMAIL,
-                    "name": "Notificación - No Reply"
-                },
-                subject="Nota de pedido aprobada",
-                html_content=f'{mensaje}'
-            )
+#                 email = sib_api_v3_sdk.SendSmtpEmail(
+#                 to=[{"email": 'soporte@limavisual.pe'}],  # variable con el correo del cliente
+#                 sender={
+#                     "email": settings.DEFAULT_FROM_EMAIL,
+#                     "name": "Notificación - No Reply"
+#                 },
+#                 subject="Nota de pedido aprobada",
+#                 html_content=f'{mensaje}'
+#             )
 
-            try:
-                response = api_instance.send_transac_email(email)
-                print("Correo enviado:", response)
-            except ApiException as e:
-                print("Error enviando correo:", e)
+#             try:
+#                 response = api_instance.send_transac_email(email)
+#                 print("Correo enviado:", response)
+#             except ApiException as e:
+#                 print("Error enviando correo:", e)
                  
     #             send_mail(
     #     asunto,
