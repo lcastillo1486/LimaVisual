@@ -863,10 +863,10 @@ def verificar_disponibilidad_digital(request):
 def gestion_notas(request):
     usuario=request.user
     if usuario.is_superuser:
-        listado_notas = NotaPedido.objects.all()
+        listado_notas = NotaPedido.objects.all().order_by('-fecha')
         listado_estado = EstadoNota.objects.all().order_by('descripcion')
     else:
-        listado_notas = NotaPedido.objects.filter(usuario_id = usuario)
+        listado_notas = NotaPedido.objects.filter(usuario_id=usuario).order_by('-fecha')
         listado_estado = EstadoNota.objects.all().order_by('descripcion')
     return render(request, "mis_np.html", {'listado_notas':listado_notas, 'listado_estado':listado_estado})
 
