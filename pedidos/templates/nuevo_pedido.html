@@ -870,6 +870,7 @@
                 // Calcular la diferencia de días (+1 para incluir el día de inicio)
                 let diasDif = '';
                 let montoTotal = '';
+                let tarifaPorDia
                 if (fechaInicio && fechaFin) {
                     const inicio = new Date(fechaInicio);
                     const fin = new Date(fechaFin);
@@ -880,8 +881,8 @@
 
                         // 💰 Calcular monto proporcional
                         if (tarifaMes > 0) {
-                            const tarifaPorDia = tarifaMes / 30;
-                            const montoTotal = ((tarifaMes * diasDif) / 30).toFixed(2);
+                            tarifaPorDia = tarifaMes / 30;
+                            montoTotal = ((tarifaMes * diasDif) / 30).toFixed(2);
                             // const tarifaDia = tarifaMes / 30;
                             // tarifaPorDia = tarifaMes / 30;
                             // montoTotal = (tarifaDia * diasDif).toFixed(2);
