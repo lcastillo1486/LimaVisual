@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from parametros.models import TipoFormaPago, TipoVenta, DiasCredito, clientes
 from ubicaciones.models import ubicacion, SlotDigital, ReservaSlot
-from .models import NumeroNotaAgencia, NumeroNotaBonificacion, NumeroNotaCanje, NumeroNotaDirecto, NumeroNotaProgramatica, EstadoNota
+from .models import NumeroNotaAgencia, NumeroNotaBonificacion, NumeroNotaCanje, NumeroNotaDirecto, NumeroNotaProgramatica, EstadoNota, NumeroNotaProduccion
 from datetime import date
 from django.db.models import Q
 from django.contrib import messages
@@ -95,6 +95,17 @@ def generar_numero_nota_programatica():
         nuevo_num = ultimo_num + 1
 
     return f"LV-P{nuevo_num:07d}"
+
+def generar_numero_nota_prod():
+    ultimo = NumeroNotaProduccion.objects.order_by("-id").first()
+    if not ultimo:
+        nuevo_num = 1
+    else:
+        # tomar la parte numérica del último número
+        ultimo_num = int(ultimo.numero.replace("LV-PR", ""))
+        nuevo_num = ultimo_num + 1
+
+    return f"LV-C{nuevo_num:07d}"
 
 @login_required
 @transaction.atomic
@@ -204,6 +215,8 @@ def nuevo_pedido(request):
                 numero_nota = generar_numero_nota_bonificacion()
             elif tipo_numero_pedido == 5:
                 numero_nota = generar_numero_nota_agencia()
+            elif tipo_numero_pedido == 9:
+                numero_nota = generar_numero_nota_prod()
             else:
                 numero_nota = "SIN_NUMERO"
 

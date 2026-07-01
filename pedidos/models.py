@@ -107,6 +107,15 @@ class NumeroNotaDirecto(models.Model):
 
     def __str__(self):
         return f"Nota {self.numero} - Pedido {self.pedido.id}"
+
+class NumeroNotaProduccion(models.Model):
+    pedido = models.OneToOneField(NotaPedido, on_delete=models.CASCADE, related_name="nota_produccion")
+    numero = models.CharField(max_length=20, unique=True)  
+    archivo_pdf = models.FileField(upload_to="guias/", blank=True, null=True)
+    fecha_emision = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Nota {self.numero} - Pedido {self.pedido.id}"
     
 class NumeroNotaProgramatica(models.Model):
     pedido = models.OneToOneField(NotaPedido, on_delete=models.CASCADE, related_name="nota_programatica")
