@@ -102,7 +102,7 @@ def generar_numero_nota_prod():
         nuevo_num = 1
     else:
         # tomar la parte numérica del último número
-        ultimo_num = int(ultimo.numero.replace("LV-PR", ""))
+        ultimo_num = int(ultimo.numero.replace("LV-R", ""))
         nuevo_num = ultimo_num + 1
 
     return f"LV-C{nuevo_num:07d}"
