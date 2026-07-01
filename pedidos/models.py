@@ -117,6 +117,12 @@ class NumeroNotaProduccion(models.Model):
     def __str__(self):
         return f"Nota {self.numero} - Pedido {self.pedido.id}"
     
+    class Meta:
+        managed = False
+        db_table = 'pedidos_numeronotaproduccion'
+        auto_created = True
+
+    
 class NumeroNotaProgramatica(models.Model):
     pedido = models.OneToOneField(NotaPedido, on_delete=models.CASCADE, related_name="nota_programatica")
     numero = models.CharField(max_length=20, unique=True)  
