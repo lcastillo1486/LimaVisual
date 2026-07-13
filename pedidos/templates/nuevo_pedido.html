@@ -75,7 +75,7 @@
             style="background: linear-gradient(145deg, #2e2e2e, #4a4a4a, #1c1c1c);">
             <h2 class="text-3xl font-extrabold text-white tracking-tight text-center">Registrar Nota de Pedido</h2>
         </div>
-        <form method="POST" action="/crear/pedido/" enctype="multipart/form-data">
+        <form method="POST" action="/crear/pedido/" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             <div
                 class="mb-4 p-4 bg-gray-100 border border-black rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1700,6 +1700,74 @@
                     document.getElementById("proveedor_nombre").focus();
 
                     // Solo detenemos, NO hacemos ningún form.submit() ni reintento automático
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+
+            form.addEventListener("submit", function (e) {
+                const tipoVenta = document.getElementById("tipo_venta").value.trim();
+
+                if (!tipoVenta) {
+                    e.preventDefault();
+                    alert("⚠️ Debes seleccionar un tipo de venta antes de continuar.");
+                    document.getElementById("tipo_venta").focus();
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+
+            form.addEventListener("submit", function (e) {
+                const tipoPago = document.getElementById("tipo_pago").value.trim();
+
+                if (!tipoPago) {
+                    e.preventDefault();
+                    alert("⚠️ Debes seleccionar un tipo de pago antes de continuar.");
+                    document.getElementById("tipo_pago").focus();
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+
+            form.addEventListener("submit", function (e) {
+                const anunciante = document.getElementById("anunciante").value.trim();
+
+                if (!anunciante) {
+                    e.preventDefault();
+                    alert("⚠️ Debes ingresar la marca (anunciante) antes de continuar.");
+                    document.getElementById("anunciante").focus();
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+
+            form.addEventListener("submit", function (e) {
+                const razonSocial = document.getElementById("razon_social").value.trim();
+
+                if (!razonSocial) {
+                    e.preventDefault();
+                    alert("⚠️ Debes seleccionar una razón social antes de continuar.");
+                    document.getElementById("razon_social").focus();
                     return false;
                 }
             });
