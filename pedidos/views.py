@@ -775,12 +775,15 @@ def verificar_disponibilidad(request):
     if fi > ff:
         return JsonResponse({'ok': False, 'error': 'La fecha de inicio no puede ser mayor a la fecha fin'}, status=400)
 
+    ESTADO_OCUPADO = 2
+
     # Fijas
     if ubicacion_id:
         conflicto = DetalleUbicacion.objects.filter(
             ubicacion_id=ubicacion_id,
             fecha_inicio__lte=ff,
-            fecha_fin__gte=fi
+            fecha_fin__gte=fi,
+            estado_id=ESTADO_OCUPADO
         ).exists()
         return JsonResponse({
             'ok': not conflicto,
@@ -792,7 +795,8 @@ def verificar_disponibilidad(request):
         conflicto = ReservaSlot.objects.filter(
             slot_id=slot_id,
             fecha_inicio__lte=ff,
-            fecha_fin__gte=fi
+            fecha_fin__gte=fi,
+            estado_id=ESTADO_OCUPADO
         ).exists()
         return JsonResponse({
             'ok': not conflicto,
